@@ -1,0 +1,12 @@
+services:
+  feelingmark:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      AUTH_TOKEN: ${AUTH_TOKEN:?define AUTH_TOKEN en .env / set AUTH_TOKEN in .env}
+    volumes:
+      # Cambia la parte izquierda por tu disco, p. ej. /mnt/mi-disco/feelingmark
+      # Change the left side to your own disk, e.g. /mnt/my-disk/feelingmark
+      - ${DATA_DIR:-./data}:/data
+    restart: unless-stopped
