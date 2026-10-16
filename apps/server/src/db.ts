@@ -10,7 +10,8 @@ export function openDb(file: string) {
     taken_at TEXT NOT NULL,   -- ISO 8601
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
-  CREATE INDEX IF NOT EXISTS photos_taken_at ON photos (taken_at);`);
+  CREATE INDEX IF NOT EXISTS photos_taken_at ON photos (taken_at);
+  CREATE TABLE IF NOT EXISTS days (date TEXT PRIMARY KEY, note TEXT NOT NULL);`);
   return db;
 }
 export type Db = ReturnType<typeof openDb>;

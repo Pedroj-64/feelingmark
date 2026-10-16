@@ -74,3 +74,13 @@ test("miniatura webp 400px, cacheada en el almacenamiento", async () => {
   assert.deepEqual([meta.width, meta.height], [400, 400]);
   assert.ok([...mem.keys()].some((k) => k.startsWith("thumbs/")));
 });
+
+test("nota por día: crear, aparece en el mes, borrar", async () => {
+  const put = (note: unknown) => app.request("/days/2024-05-02", { method: "PUT", headers: { ...auth, "content-type": "application/json" }, body: JSON.stringify({ note }) });
+  assert.equal((await put("Día de campo")).status, 200);
+  assert.equal((await (await app.request("/photos?month=2024-05", { headers: auth })).json()).notes["2024-05-02"], "Día de campo");
+  await put("");
+  assert.deepEqual((await (await app.request("/photos?month=2024-05", { headers: auth })).json()).notes, {});
+  assert.equal((await put(42)).status, 400);
+  assert.equal((await app.request("/days/2024-05-02", { method: "PUT", body: "{}" })).status, 401);
+});

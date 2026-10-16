@@ -26,6 +26,7 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   const auth = bearerAuth({ token, verifyToken: (t) => t.length === token.length && timingSafeEqual(Buffer.from(t), Buffer.from(token)) });
   app.use("/photos", auth); // la web estática (si se sirve) queda fuera del token
   app.use("/photos/*", auth);
+  app.use("/days/*", auth);
 
   app.post("/photos", async (c) => {
     const form = await c.req.parseBody();
@@ -49,7 +50,19 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     const rows = db.prepare("SELECT id, taken_at FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at").all(`${month}`, `${month}￿`);
     const days: Record<string, number[]> = {};
     for (const r of rows) (days[String(r.taken_at).slice(0, 10)] ??= []).push(Number(r.id));
-    return c.json({ month, days });
+    const notes: Record<string, string> = {};
+    for (const r of db.prepare("SELECT date, note FROM days WHERE date LIKE ?").all(`${month}-%`)) notes[String(r.date)] = String(r.note);
+    return c.json({ month, days, notes });
+  });
+
+  // Nota de texto de un día; vacía = borrar.
+  app.put("/days/:date", async (c) => {
+    const date = c.req.param("date");
+    const { note } = await c.req.json<{ note?: unknown }>().catch(() => ({ note: undefined }));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || typeof note !== "string" || note.length > 5000) return c.json({ error: "invalid date or note" }, 400);
+    if (note.trim() === "") db.prepare("DELETE FROM days WHERE date = ?").run(date);
+    else db.prepare("INSERT INTO days (date, note) VALUES (?, ?) ON CONFLICT(date) DO UPDATE SET note = excluded.note").run(date, note);
+    return c.json({ ok: true });
   });
 
   app.get("/photos/:id/file", async (c) => {
