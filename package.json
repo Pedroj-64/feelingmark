@@ -8,7 +8,8 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write \"apps/*/{src,test,app,plugins}/**/*.{ts,tsx,js}\"",
-    "format:check": "prettier --check \"apps/*/{src,test,app,plugins}/**/*.{ts,tsx,js}\""
+    "format:check": "prettier --check \"apps/*/{src,test,app,plugins}/**/*.{ts,tsx,js}\"",
+    "deploy:cloudflare": "pnpm --filter @feelingmark/mobile build:web && pnpm --filter @feelingmark/server exec wrangler deploy"
   },
   "devDependencies": {
     "prettier": "^3.9.10"
