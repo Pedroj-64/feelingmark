@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { loadConn, saveConn } from "../src/settings";
-import { useTheme } from "../src/theme";
+import { loadConn, saveConn } from "../../src/settings";
+import { useTheme } from "../../src/theme";
 
 export default function Settings() {
   const { t } = useTranslation();

@@ -4,10 +4,10 @@ import * as ImagePicker from "expo-image-picker";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
-import { createApi, type Api, type MonthData } from "../src/api";
-import { monthGrid, shiftMonth } from "../src/calendar";
-import { loadConn } from "../src/settings";
-import { useTheme } from "../src/theme";
+import { createApi, type Api, type MonthData } from "../../src/api";
+import { monthGrid, shiftMonth } from "../../src/calendar";
+import { loadConn } from "../../src/settings";
+import { useTheme } from "../../src/theme";
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -44,7 +44,8 @@ export default function CalendarScreen() {
 
   const cell = Math.min(width, 720) / 7;
   const grid = useMemo(() => monthGrid(+ym.slice(0, 4), +ym.slice(5), 1), [ym]);
-  const title = new Date(`${ym}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long", year: "numeric" });
+  const rawTitle = new Date(`${ym}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long", year: "numeric" });
+  const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
   const weekdays = useMemo(() => Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(i18n.language, { weekday: "narrow", timeZone: "UTC" })), [i18n.language]);
 
   async function add() {
@@ -112,7 +113,7 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 20 },
   nav: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "600", letterSpacing: -0.4, textTransform: "capitalize" },
+  title: { fontSize: 24, fontWeight: "600", letterSpacing: -0.4 },
   row: { flexDirection: "row" },
   wd: { textAlign: "center", fontSize: 12, paddingBottom: 6 },
   cell: { flex: 1, borderRadius: 12, borderWidth: 1.5, overflow: "hidden", padding: 5 },

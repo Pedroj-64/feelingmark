@@ -17,7 +17,8 @@ export default function Day() {
   useEffect(() => void loadConn().then((conn) => conn && setApi(createApi(conn))), []);
 
   const photos = (ids ?? "").split(",").filter(Boolean).map(Number);
-  const title = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const rawTitle = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
   const w = Math.min(width, 720) - 32;
 
   return (
@@ -41,11 +42,11 @@ export default function Day() {
 }
 
 const s = StyleSheet.create({
-  input: { flex: 1, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
+  input: { flex: 1, minWidth: 0, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
   moveBtn: { borderWidth: 1, borderRadius: 14, minHeight: 48, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
   root: { flex: 1 },
   back: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
-  title: { fontSize: 26, fontWeight: "600", letterSpacing: -0.5, marginVertical: 12, textTransform: "capitalize" },
+  title: { fontSize: 26, fontWeight: "600", letterSpacing: -0.5, marginVertical: 12 },
 });
 
 function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promise<void> }) {
