@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Linking, Platform, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api, type MonthData } from "../../src/api";
 import { monthGrid, shiftMonth } from "../../src/calendar";
@@ -62,6 +62,20 @@ export default function CalendarScreen() {
     }
   }
 
+  async function shareMonth(video: boolean) {
+    if (!api) return;
+    try {
+      const link = await api.share(ym);
+      if (video) return void Linking.openURL(`${link}/video`);
+      if (Platform.OS === "web") {
+        await navigator.clipboard.writeText(link);
+        setStatus(t("calendar.linkCopied"));
+      } else await Share.share({ message: link });
+    } catch {
+      setStatus(t("common.error"));
+    }
+  }
+
   const go = (d: number) => { setData(null); setYm(shiftMonth(ym, d)); };
   const rows = Array.from({ length: grid.length / 7 }, (_, r) => grid.slice(r * 7, r * 7 + 7));
   const empty = data && Object.keys(data.days).length === 0 && Object.keys(data.notes ?? {}).length === 0;
@@ -106,6 +120,15 @@ export default function CalendarScreen() {
         >
           <Text style={{ color: c.onAccent, fontWeight: "600" }}>{t("calendar.add")}</Text>
         </Pressable>
+        {!empty && data && (
+          <View style={s.secondary}>
+            {([["calendar.video", true], ["calendar.share", false]] as const).map(([k, v]) => (
+              <Pressable key={k} onPress={() => shareMonth(v)} style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}>
+                <Text style={{ color: c.accent, fontWeight: "600" }}>{t(k)}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -122,6 +145,8 @@ const s = StyleSheet.create({
   num: { fontSize: 12, fontVariant: ["tabular-nums"], textShadowColor: "rgba(0,0,0,0.45)", textShadowRadius: 3 },
   count: { position: "absolute", right: 5, bottom: 3, color: "#fff", fontSize: 10, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 3 },
   noteDot: { position: "absolute", left: 6, bottom: 6, width: 6, height: 6, borderRadius: 3 },
+  secondary: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
+  ghost: { flex: 1, borderWidth: 1, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
   msg: { textAlign: "center", marginTop: 20, paddingHorizontal: 16 },
   btn: { margin: 16, marginTop: 24, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
 });

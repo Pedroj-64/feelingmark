@@ -125,6 +125,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   app.post("/albums/:month/share", (c) => {
     const month = c.req.param("month");
     if (!MONTH.test(month)) return c.json({ error: "month=YYYY-MM required" }, 400);
+    const existing = db.prepare("SELECT id FROM shares WHERE month = ?").get(month)?.id as string | undefined;
+    if (existing) return c.json({ id: existing, path: `/s/${existing}` });
     const id = randomBytes(12).toString("hex");
     db.prepare("INSERT INTO shares (id, month) VALUES (?, ?)").run(id, month);
     return c.json({ id, path: `/s/${id}` }, 201);

@@ -100,6 +100,7 @@ test("enlace compartido: público, solo ese mes, revocable", async () => {
   await seedMonth("2030-03", 1);
   const share = await (await app.request("/albums/2030-02/share", { method: "POST", headers: auth })).json();
   assert.match(share.id, /^[0-9a-f]{24}$/);
+  assert.equal((await (await app.request("/albums/2030-02/share", { method: "POST", headers: auth })).json()).id, share.id); // idempotente
   const page = await app.request(share.path); // sin token
   assert.equal(page.status, 200);
   assert.match(await page.text(), /2030-02/);

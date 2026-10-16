@@ -14,6 +14,12 @@ export function createApi({ url, token }: Conn) {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     },
+    /** URL pública de solo lectura del mes (se crea la primera vez). */
+    async share(month: string): Promise<string> {
+      const r = await fetch(`${url}/albums/${month}/share`, { method: "POST", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return `${url}${(await r.json()).path}`;
+    },
     async saveNote(date: string, note: string) {
       const r = await fetch(`${url}/days/${date}`, { method: "PUT", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ note }) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
