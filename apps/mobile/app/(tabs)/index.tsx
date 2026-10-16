@@ -51,6 +51,14 @@ export default function CalendarScreen() {
   );
 
   const cell = Math.min(width, 720) / 7;
+  const dayLabel = (d: string, photos: number, hasNote: boolean) =>
+    [
+      new Date(`${d}T12:00:00`).toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long" }),
+      photos > 0 ? t("albums.count", { count: photos }) : null,
+      hasNote ? t("a11y.hasNote") : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
   const grid = useMemo(() => monthGrid(+ym.slice(0, 4), +ym.slice(5), 1), [ym]);
   const rawTitle = new Date(`${ym}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long", year: "numeric" });
   const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
@@ -139,15 +147,17 @@ export default function CalendarScreen() {
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
       <ScrollView contentContainerStyle={{ width: Math.min(width, 720), alignSelf: "center", paddingBottom: 32 }}>
         <View style={s.head}>
-          <Pressable onPress={() => go(-1)} hitSlop={12} style={s.nav}>
+          <Pressable onPress={() => go(-1)} hitSlop={12} style={s.nav} accessibilityRole="button" accessibilityLabel={t("a11y.prevMonth")}>
             <Text style={{ color: c.ink, fontSize: 22 }}>‹</Text>
           </Pressable>
-          <Text style={[s.title, { color: c.ink }]}>{title}</Text>
-          <Pressable onPress={() => go(1)} hitSlop={12} style={s.nav}>
+          <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
+            {title}
+          </Text>
+          <Pressable onPress={() => go(1)} hitSlop={12} style={s.nav} accessibilityRole="button" accessibilityLabel={t("a11y.nextMonth")}>
             <Text style={{ color: c.ink, fontSize: 22 }}>›</Text>
           </Pressable>
         </View>
-        <View style={s.row}>
+        <View style={s.row} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {weekdays.map((w, i) => (
             <Text key={i} style={[s.wd, { width: cell, color: c.muted }]}>
               {w}
@@ -159,11 +169,15 @@ export default function CalendarScreen() {
             {row.map((d, i) => {
               const ids = d ? data?.days[d] : undefined;
               const note = d ? data?.notes?.[d] : undefined;
+              if (!d) return <View key={i} style={{ width: cell, height: cell }} importantForAccessibility="no" />;
               return (
                 <Pressable
                   key={i}
                   disabled={!ids && !note}
-                  onPress={() => router.push({ pathname: "/day", params: { date: d!, ids: (ids ?? []).join(","), note: note ?? "" } })}
+                  accessible={Boolean(ids || note)}
+                  accessibilityRole={ids || note ? "button" : undefined}
+                  accessibilityLabel={dayLabel(d, ids?.length ?? 0, Boolean(note))}
+                  onPress={() => router.push({ pathname: "/day", params: { date: d, ids: (ids ?? []).join(","), note: note ?? "" } })}
                   style={{ width: cell, height: cell, padding: 2 }}
                 >
                   {d && (
@@ -174,7 +188,13 @@ export default function CalendarScreen() {
                       ]}
                     >
                       {ids && api && (
-                        <Image source={api.thumbSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="disk" />
+                        <Image
+                          source={api.thumbSource(ids[0])}
+                          style={StyleSheet.absoluteFill}
+                          contentFit="cover"
+                          cachePolicy="disk"
+                          accessible={false}
+                        />
                       )}
                       <Text style={[s.num, { color: ids ? "#fff" : c.muted }]}>{+d.slice(8)}</Text>
                       {note && <View style={[s.noteDot, { backgroundColor: ids ? "#fff" : c.accent }]} />}
@@ -187,9 +207,15 @@ export default function CalendarScreen() {
           </View>
         ))}
         {empty && !status && <Text style={[s.msg, { color: c.muted }]}>{t("calendar.empty")}</Text>}
-        {status && <Text style={[s.msg, { color: c.muted }]}>{status}</Text>}
+        {status && (
+          <Text accessibilityLiveRegion="polite" style={[s.msg, { color: c.muted }]}>
+            {status}
+          </Text>
+        )}
         <Pressable
           disabled={!api}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !api }}
           onPress={add}
           style={({ pressed }) => [
             s.btn,
@@ -210,6 +236,7 @@ export default function CalendarScreen() {
               .map(([k, v]) => (
                 <Pressable
                   key={k}
+                  accessibilityRole="button"
                   onPress={() => shareMonth(v)}
                   style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
                 >

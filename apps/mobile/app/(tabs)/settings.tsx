@@ -18,7 +18,9 @@ export default function Settings() {
   return (
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
       <View style={s.body}>
-        <Text style={[s.title, { color: c.ink }]}>{t("settings.title")}</Text>
+        <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
+          {t("settings.title")}
+        </Text>
         <Text style={{ color: c.muted, marginBottom: 24 }}>{t("settings.hint")}</Text>
         <Text style={[s.label, { color: c.muted }]}>{t("settings.url")}</Text>
         <TextInput
@@ -28,12 +30,22 @@ export default function Settings() {
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
+          accessibilityLabel={t("settings.url")}
           placeholder="http://192.168.1.10:8787"
           placeholderTextColor={c.muted}
         />
         <Text style={[s.label, { color: c.muted }]}>{t("settings.token")}</Text>
-        <TextInput style={input} value={token} onChangeText={setToken} autoCapitalize="none" autoCorrect={false} secureTextEntry />
+        <TextInput
+          style={input}
+          value={token}
+          onChangeText={setToken}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          accessibilityLabel={t("settings.token")}
+        />
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [s.btn, { backgroundColor: c.accent, transform: [{ translateY: pressed ? 1 : 0 }] }]}
           onPress={async () => {
             await saveConn({ url, token });

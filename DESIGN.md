@@ -8,9 +8,9 @@ Light:
 - **Paper** (#F7F4EF) — app background
 - **Linen** (#FFFFFF) — sheets, modals, inputs
 - **Ink** (#1F1B16) — primary text (warm off-black, never #000)
-- **Stone** (#7A736A) — secondary text, weekday labels, metadata
+- **Stone** (#756E66) — secondary text, weekday labels, metadata
 - **Hairline** (rgba(31,27,22,0.10)) — 1px dividers and borders
-- **Ember** (#C4573A) — the single accent: today marker, primary action, focus ring, days with memories
+- **Ember** (#B65136) — the single accent: today marker, primary action, focus ring, days with memories
 
 Dark:
 - **Night Paper** (#16130F) background · **Soot** (#211D18) surfaces · **Bone** (#F2EDE4) text · **Ash** (#A39B8F) secondary · **Ember Glow** (#E07A5C) accent

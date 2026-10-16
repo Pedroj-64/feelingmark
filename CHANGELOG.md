@@ -4,6 +4,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+### Added
+- Accesibilidad: roles y etiquetas para lectores de pantalla (días del calendario, navegación entre meses, campos y botones), encabezados, avisos con región en vivo y los días vacíos ya no se anuncian como botones.
+
+### Changed
+- Contraste de colores en modo claro corregido para cumplir WCAG AA (acento `#B65136`, gris secundario `#756E66`); un test vigila el contraste en ambos modos.
+
 ## [0.2.0] - 2026-10-16
 
 ### Added

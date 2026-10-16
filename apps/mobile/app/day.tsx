@@ -49,14 +49,23 @@ export default function Day() {
   return (
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
       <ScrollView contentContainerStyle={{ width: Math.min(width, 720), alignSelf: "center", padding: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={s.back}
+          accessibilityRole="button"
+          accessibilityLabel={t("a11y.backToCalendar")}
+        >
           <Text style={{ color: c.accent, fontWeight: "600" }}>‹ {t("tabs.calendar")}</Text>
         </Pressable>
-        <Text style={[s.title, { color: c.ink }]}>{title}</Text>
+        <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
+          {title}
+        </Text>
         <TextInput
           value={note}
           onChangeText={setNote}
           onBlur={() => save(note)}
+          accessibilityLabel={t("a11y.noteField")}
           placeholder={t("day.notePlaceholder")}
           placeholderTextColor={c.muted}
           multiline
@@ -66,13 +75,14 @@ export default function Day() {
         {noteErr && <Text style={{ color: c.accent, marginBottom: 12 }}>{t("common.error")}</Text>}
         <View style={{ gap: 20 }}>
           {api &&
-            photos.map((id) => (
+            photos.map((id, i) => (
               <View key={id} style={{ gap: 8 }}>
                 <Image
                   source={api.fileSource(id)}
                   style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }}
                   contentFit="cover"
                   cachePolicy="disk"
+                  accessibilityLabel={t("a11y.photoOf", { index: i + 1, total: photos.length })}
                 />
                 <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
               </View>
@@ -105,9 +115,11 @@ function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promis
           value={v}
           onChangeText={setV}
           autoCapitalize="none"
+          accessibilityLabel={t("a11y.dateField")}
           style={[s.input, { color: c.ink, borderColor: c.line, backgroundColor: c.surface }]}
         />
         <Pressable
+          accessibilityRole="button"
           onPress={() => (ok ? onMove(v).catch(() => setMsg(t("common.error"))) : setMsg(t("day.invalid")))}
           style={({ pressed }) => [s.moveBtn, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
         >

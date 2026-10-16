@@ -5,6 +5,15 @@ export default {
     count_one: "{{count}} photo",
     count_other: "{{count}} photos",
   },
+  a11y: {
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    hasNote: "has a note",
+    backToCalendar: "Back to the calendar",
+    noteField: "Note for this day",
+    dateField: "Move this photo to another day (YYYY-MM-DD)",
+    photoOf: "Photo {{index}} of {{total}}",
+  },
   calendar: {
     uploadingLeft: "Uploading… {{count}} left",
     pending_one: "{{count}} photo pending, will retry",

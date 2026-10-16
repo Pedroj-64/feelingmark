@@ -16,12 +16,15 @@ export default function Connect() {
   return (
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
       <View style={s.body}>
-        <Text style={[s.title, { color: c.ink }]}>{t("connect.title")}</Text>
+        <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
+          {t("connect.title")}
+        </Text>
         {valid ? (
           <>
             <Text style={{ color: c.muted, marginBottom: 8 }}>{t("connect.confirm")}</Text>
             <Text style={[s.url, { color: c.ink, borderColor: c.line, backgroundColor: c.surface }]}>{u}</Text>
             <Pressable
+              accessibilityRole="button"
               onPress={async () => {
                 await saveConn({ url: u, token });
                 router.replace("/");
@@ -34,7 +37,7 @@ export default function Connect() {
         ) : (
           <Text style={{ color: c.muted }}>{t("connect.invalid")}</Text>
         )}
-        <Pressable onPress={() => router.replace("/")} style={s.cancel}>
+        <Pressable onPress={() => router.replace("/")} style={s.cancel} accessibilityRole="button">
           <Text style={{ color: c.accent, fontWeight: "600" }}>{t("connect.cancel")}</Text>
         </Pressable>
       </View>

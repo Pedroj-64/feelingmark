@@ -7,6 +7,15 @@ const es: typeof en = {
     count_one: "{{count}} foto",
     count_other: "{{count}} fotos",
   },
+  a11y: {
+    prevMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
+    hasNote: "tiene una nota",
+    backToCalendar: "Volver al calendario",
+    noteField: "Nota de este día",
+    dateField: "Mover esta foto a otro día (AAAA-MM-DD)",
+    photoOf: "Foto {{index}} de {{total}}",
+  },
   calendar: {
     uploadingLeft: "Subiendo… quedan {{count}}",
     pending_one: "{{count}} foto pendiente, se reintentará",

@@ -44,18 +44,30 @@ export default function Albums() {
   return (
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
       <ScrollView contentContainerStyle={{ width: Math.min(width, 720), alignSelf: "center", padding: 16, paddingBottom: 32 }}>
-        <Text style={[s.title, { color: c.ink }]}>{t("tabs.albums")}</Text>
+        <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
+          {t("tabs.albums")}
+        </Text>
         {error && <Text style={{ color: c.muted, marginBottom: 12 }}>{t("calendar.offline")}</Text>}
         {albums && albums.length === 0 && <Text style={{ color: c.muted }}>{t("albums.empty")}</Text>}
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap }}>
           {albums?.map((al) => (
             <Pressable
               key={al.month}
+              accessibilityRole="button"
+              accessibilityLabel={`${label(al.month)}, ${t("albums.count", { count: al.count })}`}
               onPress={() => router.navigate({ pathname: "/", params: { month: al.month } })}
               style={({ pressed }) => [{ width: card, transform: [{ translateY: pressed ? 1 : 0 }] }]}
             >
               <View style={[s.cover, { width: card, height: card, backgroundColor: c.surface }]}>
-                {api && <Image source={api.thumbSource(al.cover)} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="disk" />}
+                {api && (
+                  <Image
+                    source={api.thumbSource(al.cover)}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                    cachePolicy="disk"
+                    accessible={false}
+                  />
+                )}
               </View>
               <Text style={[s.name, { color: c.ink }]}>{label(al.month)}</Text>
               <Text style={{ color: c.muted, fontSize: 13 }}>{t("albums.count", { count: al.count })}</Text>
