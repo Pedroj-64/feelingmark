@@ -11,6 +11,13 @@ export default {
     uploaded_other: "{{count}} photos added",
     offline: "Storage unavailable. Showing what is cached.",
   },
+  connect: {
+    title: "Connect to your server",
+    confirm: "Only connect if you scanned this code from your own server:",
+    action: "Connect",
+    cancel: "Cancel",
+    invalid: "This pairing code is not valid.",
+  },
   day: { notePlaceholder: "Write something about this day…", move: "Move to day", moved: "Moved", invalid: "Use the format YYYY-MM-DD" },
   settings: {
     title: "Connect your server",

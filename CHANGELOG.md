@@ -7,6 +7,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ### Added
 - Despliegue en Cloudflare (Worker + D1 + R2 + web) con `pnpm deploy:cloudflare`.
 - La app sube una miniatura generada en el dispositivo.
+- Emparejar el teléfono con un QR impreso por el servidor (con pantalla de confirmación).
 
 ### Changed
 - El núcleo del servidor es asíncrono y no depende de APIs de Node; la base de v0.1.0 se migra sola.

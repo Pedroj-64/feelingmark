@@ -1,7 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
+import { networkInterfaces } from "node:os";
 import { dirname } from "node:path";
 import { serve } from "@hono/node-server";
+import qrcode from "qrcode-terminal";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createApp } from "./app.ts";
 import { openDb } from "./db-node.ts";
@@ -37,3 +39,14 @@ if (process.env.WEB_DIR) {
 }
 serve({ fetch: app.fetch, port: Number(process.env.PORT ?? 8787) });
 console.log(`Feelingmark server on :${process.env.PORT ?? 8787}`);
+
+// QR de emparejamiento: al escanearlo con la cámara del teléfono, la app abre una pantalla para confirmar la conexión.
+// En Docker la IP detectada es la del contenedor: define PUBLIC_URL (p. ej. http://192.168.1.10:8787).
+const lan =
+  Object.values(networkInterfaces())
+    .flat()
+    .find((i) => i?.family === "IPv4" && !i.internal)?.address ?? "localhost";
+const publicUrl = process.env.PUBLIC_URL || `http://${lan}:${process.env.PORT ?? 8787}`;
+const link = `feelingmark://connect?u=${encodeURIComponent(publicUrl)}&t=${encodeURIComponent(token)}`;
+console.log(`\nEmparejar el teléfono / Pair your phone (${publicUrl}):`);
+qrcode.generate(link, { small: true });

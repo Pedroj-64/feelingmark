@@ -16,6 +16,8 @@ Without Docker: Node 26+, `pnpm install`, then `cd apps/server && AUTH_TOKEN=...
 ### 2. Connect the app
 Open the web client or the Android app → **Settings** → enter the server URL and the token. On a phone use your machine's LAN address (`http://192.168.x.x:8787`). Over the internet put the server behind HTTPS (Caddy, nginx, Cloudflare Tunnel): the token travels in a header.
 
+**Pair with a QR:** when the server starts it prints a QR in the terminal. Scan it with your phone's camera: the app opens and asks you to confirm. In Docker set `PUBLIC_URL=http://<your-LAN-ip>:8787` so the QR has the right address (`docker compose logs feelingmark` shows it).
+
 ### 3. Android app
 Download the signed APK from the [Releases](https://github.com/Pedroj-64/feelingmark/releases) page, or build it: `cd apps/mobile && npx expo prebuild --platform android && cd android && ./gradlew assembleRelease` (JDK 21 + Android SDK).
 
@@ -40,6 +42,8 @@ Sin Docker: Node 26+, `pnpm install` y `cd apps/server && AUTH_TOKEN=... pnpm de
 
 ### 2. Conectar la app
 Abre el cliente web o la app Android → **Ajustes** → escribe la URL del servidor y el token. En el celular usa la dirección de tu equipo en la red local (`http://192.168.x.x:8787`). Por internet pon el servidor detrás de HTTPS (Caddy, nginx, Cloudflare Tunnel): el token viaja en una cabecera.
+
+**Emparejar con QR:** al arrancar, el servidor imprime un QR en la terminal. Escanéalo con la cámara del teléfono: la app se abre y te pide confirmar. En Docker define `PUBLIC_URL=http://<ip-de-tu-red>:8787` para que el QR tenga la dirección correcta (`docker compose logs feelingmark` lo muestra).
 
 ### 3. App Android
 Descarga el APK firmado desde [Releases](https://github.com/Pedroj-64/feelingmark/releases), o compílalo: `cd apps/mobile && npx expo prebuild --platform android && cd android && ./gradlew assembleRelease` (JDK 21 + Android SDK).
