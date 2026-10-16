@@ -19,7 +19,7 @@ test("es y en tienen exactamente las mismas claves", () => {
   assert.deepEqual([...new Set(flat(es).map(base))].sort(), [...new Set(flat(en).map(base))].sort());
 });
 
-test("cada t(\"clave\") del código existe en los textos", () => {
+test('cada t("clave") del código existe en los textos', () => {
   const known = new Set(flat(en).map(base));
   const used = new Set<string>();
   for (const f of [...walk("app"), ...walk("src")]) for (const m of readFileSync(f, "utf8").matchAll(/\bt\(\s*"([\w.]+)"/g)) used.add(m[1]);

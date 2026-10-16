@@ -1,7 +1,7 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -39,17 +39,6 @@ export default function CalendarScreen() {
     [t],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      loadConn().then((conn) => {
-        if (!conn) return setStatus(t("settings.title"));
-        const a = createApi(conn);
-        setApi(a);
-        load(a, ym);
-      });
-    }, [ym, load, t]),
-  );
-
   const cell = Math.min(width, 720) / 7;
   const grid = useMemo(() => monthGrid(+ym.slice(0, 4), +ym.slice(5), 1), [ym]);
   const rawTitle = new Date(`${ym}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long", year: "numeric" });
@@ -63,19 +52,38 @@ export default function CalendarScreen() {
   );
 
   // Sube lo pendiente de la cola (también lo que quedó de una sesión anterior).
+  const flushing = useRef(false); // un solo vaciado de la cola a la vez
   const flush = useCallback(
     async (a: Api, month: string) => {
-      const r = await drain(
-        queueStore,
-        (p) => a.upload(p),
-        (left) => setStatus(t("calendar.uploadingLeft", { count: left })),
-      );
+      if (flushing.current) return;
+      flushing.current = true;
+      let r;
+      try {
+        r = await drain(
+          queueStore,
+          (p) => a.upload(p),
+          (left) => setStatus(t("calendar.uploadingLeft", { count: left })),
+        );
+      } finally {
+        flushing.current = false;
+      }
       if (r.done > 0) await load(a, month);
       if (r.left > 0) setStatus(t("calendar.pending", { count: r.left }));
       else if (r.dropped > 0) setStatus(t("calendar.dropped", { count: r.dropped }));
       else if (r.done > 0) setStatus(t("calendar.uploaded", { count: r.done }));
     },
     [load, t],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadConn().then((conn) => {
+        if (!conn) return setStatus(t("settings.title"));
+        const a = createApi(conn);
+        setApi(a);
+        load(a, ym).then(() => flush(a, ym));
+      });
+    }, [ym, load, flush, t]),
   );
 
   async function add() {

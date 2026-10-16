@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-16
+
+### Added
+- Cola de subidas persistente con reintentos: si falla la red, las fotos quedan pendientes y se suben solas al reabrir la app (verificado en Android con cierre forzado de la app).
+
 ## [0.1.1] - 2026-10-16
 
 ### Fixed
