@@ -18,3 +18,5 @@ key.properties
 data/
 *.sqlite
 *.sqlite-*
+android/
+ios/

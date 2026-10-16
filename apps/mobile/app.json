@@ -28,7 +28,16 @@
       "expo-router",
       "expo-localization",
       "expo-secure-store",
-      "expo-image"
+      "expo-image",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "./plugins/withReleaseSigning"
     ],
     "scheme": "feelingmark"
   }
