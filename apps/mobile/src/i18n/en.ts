@@ -1,5 +1,10 @@
 export default {
-  tabs: { calendar: "Calendar", settings: "Settings" },
+  tabs: { calendar: "Calendar", albums: "Albums", settings: "Settings" },
+  albums: {
+    empty: "No albums yet. Add photos and each month gets its own album.",
+    count_one: "{{count}} photo",
+    count_other: "{{count}} photos",
+  },
   calendar: {
     uploadingLeft: "Uploading… {{count}} left",
     pending_one: "{{count}} photo pending, will retry",

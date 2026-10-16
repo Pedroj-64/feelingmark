@@ -1,7 +1,7 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -24,6 +24,11 @@ export default function CalendarScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [ym, setYm] = useState(today.slice(0, 7));
+  // Llegar desde un álbum (/?month=YYYY-MM) abre ese mes.
+  const { month: monthParam } = useLocalSearchParams<{ month?: string }>();
+  useEffect(() => {
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) setYm(monthParam);
+  }, [monthParam]);
   const [data, setData] = useState<MonthData | null>(null);
   const [api, setApi] = useState<Api | null>(null);
   const [status, setStatus] = useState<string | null>(null);

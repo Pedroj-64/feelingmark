@@ -6,6 +6,8 @@ import type { Conn } from "./settings.ts";
 /** Archivo local para FormData en nativo: el fetch de Expo no admite {uri,...}; pide un objeto con bytes(), name y type. */
 const nativePart = (uri: string, name: string, type: string) => ({ name, type, bytes: () => new FsFile(uri).bytes() }) as unknown as Blob;
 
+export type Album = { month: string; count: number; cover: number };
+
 export type MonthData = { month: string; days: Record<string, number[]>; notes: Record<string, string>; video?: boolean };
 
 export function createApi({ url, token }: Conn) {
@@ -24,6 +26,11 @@ export function createApi({ url, token }: Conn) {
       const r = await fetch(`${url}/albums/${month}/share`, { method: "POST", headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return `${url}${(await r.json()).path}`;
+    },
+    async albums(): Promise<Album[]> {
+      const r = await fetch(`${url}/albums`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return (await r.json()).albums;
     },
     async saveNote(date: string, note: string) {
       const r = await fetch(`${url}/days/${date}`, {

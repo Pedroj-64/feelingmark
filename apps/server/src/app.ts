@@ -46,7 +46,7 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   const app = new Hono();
   app.use("*", cors()); // el cliente web puede vivir en otro origen; el acceso lo protege el token
   const auth = bearerAuth({ token, verifyToken: (t) => safeEqual(t, token) });
-  for (const p of ["/photos", "/photos/*", "/days/*", "/albums/*", "/shares/*"]) app.use(p, auth); // la web estática queda fuera del token
+  for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*"]) app.use(p, auth); // la web estática queda fuera del token
 
   app.post("/photos", async (c) => {
     const form = await c.req.parseBody();
@@ -87,6 +87,14 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     const notes: Record<string, string> = {};
     for (const r of await db.all("SELECT date, note FROM days WHERE date LIKE ?", `${month}-%`)) notes[String(r.date)] = String(r.note);
     return c.json({ month, days, notes, video: Boolean(opts.slideshow) });
+  });
+
+  // Un álbum por cada mes con fotos (el más reciente primero): cuántas hay y cuál usar de portada.
+  app.get("/albums", async (c) => {
+    const rows = await db.all(
+      "SELECT substr(taken_at, 1, 7) AS month, COUNT(*) AS count, MIN(id) AS cover FROM photos GROUP BY month ORDER BY month DESC",
+    );
+    return c.json({ albums: rows.map((r) => ({ month: String(r.month), count: Number(r.count), cover: Number(r.cover) })) });
   });
 
   // Nota de texto de un día; vacía = borrar.

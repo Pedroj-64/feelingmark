@@ -1,7 +1,12 @@
 import type en from "./en.ts";
 
 const es: typeof en = {
-  tabs: { calendar: "Calendario", settings: "Ajustes" },
+  tabs: { calendar: "Calendario", albums: "Álbumes", settings: "Ajustes" },
+  albums: {
+    empty: "Aún no hay álbumes. Añade fotos y cada mes tendrá el suyo.",
+    count_one: "{{count}} foto",
+    count_other: "{{count}} fotos",
+  },
   calendar: {
     uploadingLeft: "Subiendo… quedan {{count}}",
     pending_one: "{{count}} foto pendiente, se reintentará",

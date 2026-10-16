@@ -184,3 +184,14 @@ test("sin ffmpeg el video responde 501 con un mensaje claro", async () => {
 test("el mes informa si hay resumen en video disponible", async () => {
   assert.equal((await (await app.request("/photos?month=2024-05", { headers: auth })).json()).video, true);
 });
+
+test("álbumes: un álbum por mes, el más reciente primero, con conteo y portada", async () => {
+  const r = await (await app.request("/albums", { headers: auth })).json();
+  const months = r.albums.map((a: { month: string }) => a.month);
+  assert.deepEqual(months, [...months].sort().reverse());
+  const feb = r.albums.find((a: { month: string }) => a.month === "2030-02");
+  assert.equal(feb.count, 2);
+  const febIds = Object.values((await (await app.request("/photos?month=2030-02", { headers: auth })).json()).days).flat() as number[];
+  assert.ok(febIds.includes(feb.cover));
+  assert.equal((await app.request("/albums")).status, 401);
+});

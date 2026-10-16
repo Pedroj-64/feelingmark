@@ -17,6 +17,7 @@ export default function Layout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: t("tabs.calendar") }} />
+      <Tabs.Screen name="albums" options={{ title: t("tabs.albums") }} />
       <Tabs.Screen name="settings" options={{ title: t("tabs.settings") }} />
     </Tabs>
   );
