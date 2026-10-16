@@ -1,0 +1,60 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { createApp } from "../src/app.ts";
+import { openDb } from "../src/db.ts";
+import type { StorageAdapter } from "../src/storage.ts";
+
+const mem = new Map<string, Uint8Array>();
+const storage: StorageAdapter = {
+  put: async (k, d) => void mem.set(k, d),
+  get: async (k) => { const v = mem.get(k); if (!v) throw new Error("gone"); return v; },
+};
+const app = createApp({ db: openDb(":memory:"), storage, token: "secret" });
+const auth = { authorization: "Bearer secret" };
+
+/** JPEG mínimo con EXIF DateTimeOriginal = 2021:03:04 05:06:07 */
+function jpegWithExif(): Uint8Array {
+  const date = Buffer.from("2021:03:04 05:06:07\0", "latin1");
+  const tiff = Buffer.alloc(44 + date.length);
+  tiff.write("II", 0); tiff.writeUInt16LE(42, 2); tiff.writeUInt32LE(8, 4);
+  tiff.writeUInt16LE(1, 8); tiff.writeUInt16LE(0x8769, 10); tiff.writeUInt16LE(4, 12); tiff.writeUInt32LE(1, 14); tiff.writeUInt32LE(26, 18);
+  tiff.writeUInt16LE(1, 26); tiff.writeUInt16LE(0x9003, 28); tiff.writeUInt16LE(2, 30); tiff.writeUInt32LE(20, 32); tiff.writeUInt32LE(44, 36);
+  date.copy(tiff, 44);
+  const body = Buffer.concat([Buffer.from("Exif\0\0", "latin1"), tiff]);
+  const app1 = Buffer.concat([Buffer.from([0xff, 0xe1, (body.length + 2) >> 8, (body.length + 2) & 255]), body]);
+  return Buffer.concat([Buffer.from([0xff, 0xd8]), app1, Buffer.from([0xff, 0xd9])]);
+}
+
+const upload = (bytes: Uint8Array, extra: Record<string, string> = {}, headers = auth) => {
+  const f = new FormData();
+  f.set("file", new File([bytes as Uint8Array<ArrayBuffer>], "a.jpg", { type: "image/jpeg", lastModified: Date.UTC(2020, 0, 2) }));
+  for (const [k, v] of Object.entries(extra)) f.set(k, v);
+  return app.request("/photos", { method: "POST", body: f, headers });
+};
+
+test("rechaza sin token", async () => {
+  assert.equal((await upload(jpegWithExif(), {}, {} as typeof auth)).status, 401);
+});
+
+test("la fecha sale del EXIF y el calendario agrupa por día", async () => {
+  const r = await upload(jpegWithExif());
+  assert.equal(r.status, 201);
+  const month = await (await app.request("/photos?month=2021-03", { headers: auth })).json();
+  assert.equal(Object.keys(month.days).length, 1);
+  assert.match(Object.keys(month.days)[0], /^2021-03-0[34]$/); // depende de la zona horaria
+});
+
+test("duplicado por hash y fecha manual con prioridad; PATCH mueve de día", async () => {
+  const again = await (await upload(jpegWithExif())).json();
+  assert.equal(again.duplicate, true);
+  const manual = await (await upload(new Uint8Array([0xff, 0xd8, 1, 2, 0xff, 0xd9]), { takenAt: "2022-07-09T12:00:00Z" })).json();
+  assert.equal(manual.takenAt, "2022-07-09T12:00:00.000Z");
+  await app.request(`/photos/${manual.id}`, { method: "PATCH", headers: { ...auth, "content-type": "application/json" }, body: JSON.stringify({ takenAt: "2022-08-01T00:00:00Z" }) });
+  const aug = await (await app.request("/photos?month=2022-08", { headers: auth })).json();
+  assert.deepEqual(aug.days["2022-08-01"], [manual.id]);
+});
+
+test("disco desconectado devuelve 503, no revienta", async () => {
+  mem.clear();
+  assert.equal((await app.request("/photos/1/file", { headers: auth })).status, 503);
+});
