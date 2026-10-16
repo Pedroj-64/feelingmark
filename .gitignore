@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.expo/
+.wrangler/
+*.log
+.DS_Store
+
+# secretos: nunca versionar / never commit
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+key.properties
+*-key.properties
+
+# datos locales del servidor
+data/
+*.sqlite
+*.sqlite-*
