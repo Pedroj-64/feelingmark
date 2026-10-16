@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api } from "../src/api";
 import { loadConn } from "../src/settings";
@@ -27,9 +27,12 @@ export default function Day() {
           <Text style={{ color: c.accent, fontWeight: "600" }}>‹ {t("tabs.calendar")}</Text>
         </Pressable>
         <Text style={[s.title, { color: c.ink }]}>{title}</Text>
-        <View style={{ gap: 12 }}>
+        <View style={{ gap: 20 }}>
           {api && photos.map((id) => (
-            <Image key={id} source={api.fileSource(id)} style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }} contentFit="cover" />
+            <View key={id} style={{ gap: 8 }}>
+              <Image source={api.fileSource(id)} style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }} contentFit="cover" />
+              <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -38,7 +41,31 @@ export default function Day() {
 }
 
 const s = StyleSheet.create({
+  input: { flex: 1, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
+  moveBtn: { borderWidth: 1, borderRadius: 14, minHeight: 48, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
   root: { flex: 1 },
   back: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   title: { fontSize: 26, fontWeight: "600", letterSpacing: -0.5, marginVertical: 12, textTransform: "capitalize" },
 });
+
+function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promise<void> }) {
+  const { t } = useTranslation();
+  const c = useTheme();
+  const [v, setV] = useState(date);
+  const [msg, setMsg] = useState("");
+  const ok = /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
+  return (
+    <View>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <TextInput value={v} onChangeText={setV} autoCapitalize="none" style={[s.input, { color: c.ink, borderColor: c.line, backgroundColor: c.surface }]} />
+        <Pressable
+          onPress={() => (ok ? onMove(v).catch(() => setMsg(t("common.error"))) : setMsg(t("day.invalid")))}
+          style={({ pressed }) => [s.moveBtn, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+        >
+          <Text style={{ color: c.accent, fontWeight: "600" }}>{t("day.move")}</Text>
+        </Pressable>
+      </View>
+      {msg !== "" && <Text style={{ color: c.muted, marginTop: 4 }}>{msg}</Text>}
+    </View>
+  );
+}
