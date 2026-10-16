@@ -13,11 +13,12 @@ export function createApi({ url, token }: Conn) {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     },
-    async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File }) {
+    async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File; takenAt?: string }) {
       const form = new FormData();
       const type = asset.mimeType ?? "image/jpeg";
       if (Platform.OS === "web") form.append("file", asset.file ?? (await (await fetch(asset.uri)).blob()), asset.fileName ?? "photo");
       else form.append("file", { uri: asset.uri, name: asset.fileName ?? "photo.jpg", type } as unknown as Blob);
+      if (asset.takenAt) form.append("takenAt", asset.takenAt);
       const r = await fetch(`${url}/photos`, { method: "POST", body: form, headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json() as Promise<{ id: number; takenAt: string; duplicate: boolean }>;
