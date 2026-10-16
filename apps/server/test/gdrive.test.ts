@@ -110,3 +110,21 @@ test("OAuth: URL de consentimiento y canje del código", async () => {
   await assert.rejects(exchangeCode({ clientId: "c", clientSecret: "s" }, "http://r", "bad", g.endpoints));
   g.srv.close();
 });
+
+test("OAuth: start exige token, el callback valida state y guarda el refresh token", async () => {
+  const { Hono } = await import("hono");
+  const { openDb } = await import("../src/db-node.ts");
+  const { getRefreshToken, mountGoogleOAuth } = await import("../src/oauth-google.ts");
+  const db = await openDb(":memory:");
+  const app = new Hono();
+  mountGoogleOAuth(app, { db, creds: { clientId: "cid", clientSecret: "s" }, redirectBase: "http://localhost:8787", token: "tk" });
+  assert.equal((await app.request("/oauth/google/start?token=bad")).status, 401);
+  const start = await app.request("/oauth/google/start?token=tk");
+  assert.equal(start.status, 302);
+  const state = new URL(start.headers.get("location")!).searchParams.get("state")!;
+  assert.equal((await app.request("/oauth/google/callback?code=x&state=forged")).status, 400); // state inventado
+  assert.equal(await getRefreshToken(db), undefined);
+  const denied = await app.request(`/oauth/google/callback?error=access_denied&state=${state}`);
+  assert.equal(denied.status, 400);
+  assert.equal((await app.request(`/oauth/google/callback?code=x&state=${state}`)).status, 400); // state de un solo uso
+});

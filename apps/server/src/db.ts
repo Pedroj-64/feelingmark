@@ -19,6 +19,7 @@ const SCHEMA = [
   )`,
   "CREATE INDEX IF NOT EXISTS photos_taken_at ON photos (taken_at)",
   "CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, month TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
   "CREATE TABLE IF NOT EXISTS days (date TEXT PRIMARY KEY, note TEXT NOT NULL)",
 ];
 // Bases creadas antes de v0.1.1 no tienen thumb_mime; el ALTER falla sin daño si ya existe.
