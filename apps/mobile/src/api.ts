@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import type { Conn } from "./settings.ts";
 
-export type MonthData = { month: string; days: Record<string, number[]> };
+export type MonthData = { month: string; days: Record<string, number[]>; notes: Record<string, string> };
 
 export function createApi({ url, token }: Conn) {
   const headers = { authorization: `Bearer ${token}` };
@@ -13,6 +13,10 @@ export function createApi({ url, token }: Conn) {
       const r = await fetch(`${url}/photos?month=${ym}`, { headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
+    },
+    async saveNote(date: string, note: string) {
+      const r = await fetch(`${url}/days/${date}`, { method: "PUT", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ note }) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
     },
     async move(id: number, date: string) {
       const r = await fetch(`${url}/photos/${id}`, { method: "PATCH", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ takenAt: date }) });

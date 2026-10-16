@@ -8,12 +8,14 @@ import { loadConn } from "../src/settings";
 import { useTheme } from "../src/theme";
 
 export default function Day() {
-  const { date, ids } = useLocalSearchParams<{ date: string; ids: string }>();
+  const { date, ids, note: initialNote } = useLocalSearchParams<{ date: string; ids: string; note?: string }>();
   const { t, i18n } = useTranslation();
   const c = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [api, setApi] = useState<Api | null>(null);
+  const [note, setNote] = useState(initialNote ?? "");
+  const [noteErr, setNoteErr] = useState(false);
   useEffect(() => void loadConn().then((conn) => conn && setApi(createApi(conn))), []);
 
   const photos = (ids ?? "").split(",").filter(Boolean).map(Number);
@@ -28,6 +30,17 @@ export default function Day() {
           <Text style={{ color: c.accent, fontWeight: "600" }}>‹ {t("tabs.calendar")}</Text>
         </Pressable>
         <Text style={[s.title, { color: c.ink }]}>{title}</Text>
+        <TextInput
+          value={note}
+          onChangeText={setNote}
+          onBlur={() => api?.saveNote(date, note).then(() => setNoteErr(false), () => setNoteErr(true))}
+          placeholder={t("day.notePlaceholder")}
+          placeholderTextColor={c.muted}
+          multiline
+          maxLength={5000}
+          style={[s.note, { color: c.ink, borderColor: noteErr ? c.accent : c.line, backgroundColor: c.surface }]}
+        />
+        {noteErr && <Text style={{ color: c.accent, marginBottom: 12 }}>{t("common.error")}</Text>}
         <View style={{ gap: 20 }}>
           {api && photos.map((id) => (
             <View key={id} style={{ gap: 8 }}>
@@ -42,6 +55,7 @@ export default function Day() {
 }
 
 const s = StyleSheet.create({
+  note: { borderWidth: 1, borderRadius: 14, padding: 14, minHeight: 88, fontSize: 16, marginBottom: 20, textAlignVertical: "top" },
   input: { flex: 1, minWidth: 0, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
   moveBtn: { borderWidth: 1, borderRadius: 14, minHeight: 48, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
   root: { flex: 1 },

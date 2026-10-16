@@ -64,7 +64,7 @@ export default function CalendarScreen() {
 
   const go = (d: number) => { setData(null); setYm(shiftMonth(ym, d)); };
   const rows = Array.from({ length: grid.length / 7 }, (_, r) => grid.slice(r * 7, r * 7 + 7));
-  const empty = data && Object.keys(data.days).length === 0;
+  const empty = data && Object.keys(data.days).length === 0 && Object.keys(data.notes ?? {}).length === 0;
 
   return (
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
@@ -81,12 +81,14 @@ export default function CalendarScreen() {
           <View key={r} style={s.row}>
             {row.map((d, i) => {
               const ids = d ? data?.days[d] : undefined;
+              const note = d ? data?.notes?.[d] : undefined;
               return (
-                <Pressable key={i} disabled={!ids} onPress={() => router.push({ pathname: "/day", params: { date: d, ids: ids!.join(",") } })} style={{ width: cell, height: cell, padding: 2 }}>
+                <Pressable key={i} disabled={!ids && !note} onPress={() => router.push({ pathname: "/day", params: { date: d!, ids: (ids ?? []).join(","), note: note ?? "" } })} style={{ width: cell, height: cell, padding: 2 }}>
                   {d && (
-                    <View style={[s.cell, { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids ? c.surface : "transparent" }]}>
+                    <View style={[s.cell, { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids || note ? c.surface : "transparent" }]}>
                       {ids && api && <Image source={api.thumbSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" />}
                       <Text style={[s.num, { color: ids ? "#fff" : c.muted }]}>{+d.slice(8)}</Text>
+                      {note && <View style={[s.noteDot, { backgroundColor: ids ? "#fff" : c.accent }]} />}
                       {ids && ids.length > 1 && <Text style={s.count}>{ids.length}</Text>}
                     </View>
                   )}
@@ -119,6 +121,7 @@ const s = StyleSheet.create({
   cell: { flex: 1, borderRadius: 12, borderWidth: 1.5, overflow: "hidden", padding: 5 },
   num: { fontSize: 12, fontVariant: ["tabular-nums"], textShadowColor: "rgba(0,0,0,0.45)", textShadowRadius: 3 },
   count: { position: "absolute", right: 5, bottom: 3, color: "#fff", fontSize: 10, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 3 },
+  noteDot: { position: "absolute", left: 6, bottom: 6, width: 6, height: 6, borderRadius: 3 },
   msg: { textAlign: "center", marginTop: 20, paddingHorizontal: 16 },
   btn: { margin: 16, marginTop: 24, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
 });
