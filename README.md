@@ -32,7 +32,7 @@ Deploy on Cloudflare Workers + D1 + R2 with one command ([guide](docs/cloudflare
 git clone <this repo> && cd feelingmark
 echo "AUTH_TOKEN=$(openssl rand -hex 24)" > .env
 echo "DATA_DIR=/path/to/your/disk/feelingmark" >> .env   # optional, default ./data
-docker compose up -d --build
+docker compose up -d
 ```
 
 Open `http://localhost:8787` for the web client. In **Settings**, enter the server URL and your token. The mobile app connects the same way (use your computer's LAN address, e.g. `http://192.168.1.10:8787`).

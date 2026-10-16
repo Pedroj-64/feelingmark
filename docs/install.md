@@ -7,9 +7,9 @@
 git clone https://github.com/Pedroj-64/feelingmark && cd feelingmark
 echo "AUTH_TOKEN=$(openssl rand -hex 24)" > .env
 echo "DATA_DIR=/path/to/your/disk/feelingmark" >> .env   # optional, default ./data
-docker compose up -d --build
+docker compose up -d
 ```
-The server and the web client are on `http://<your-machine>:8787`. Keep `.env` private: the token gives full access.
+This pulls the published image `ghcr.io/pedroj-64/feelingmark` (use `docker compose up -d --build` to build it from source). The server and the web client are on `http://<your-machine>:8787`. Keep `.env` private: the token gives full access.
 
 Without Docker: Node 26+, `pnpm install`, then `cd apps/server && AUTH_TOKEN=... pnpm dev` (set `WEB_DIR` to an `expo export -p web` folder to serve the web client; the video recap needs `ffmpeg` on the PATH).
 
@@ -34,9 +34,9 @@ Mount it and point `DATA_DIR` (Docker) or `STORAGE_PATH` at it. If the drive is 
 git clone https://github.com/Pedroj-64/feelingmark && cd feelingmark
 echo "AUTH_TOKEN=$(openssl rand -hex 24)" > .env
 echo "DATA_DIR=/ruta/a/tu/disco/feelingmark" >> .env   # opcional, por defecto ./data
-docker compose up -d --build
+docker compose up -d
 ```
-El servidor y el cliente web quedan en `http://<tu-equipo>:8787`. Mantén `.env` privado: el token da acceso total.
+Esto descarga la imagen publicada `ghcr.io/pedroj-64/feelingmark` (usa `docker compose up -d --build` para compilarla desde el código). El servidor y el cliente web quedan en `http://<tu-equipo>:8787`. Mantén `.env` privado: el token da acceso total.
 
 Sin Docker: Node 26+, `pnpm install` y `cd apps/server && AUTH_TOKEN=... pnpm dev` (define `WEB_DIR` con una carpeta de `expo export -p web` para servir la web; el resumen en video necesita `ffmpeg` en el PATH).
 

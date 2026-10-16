@@ -1,5 +1,6 @@
 services:
   feelingmark:
+    image: ghcr.io/pedroj-64/feelingmark:latest
     build: .
     ports:
       - "8787:8787"

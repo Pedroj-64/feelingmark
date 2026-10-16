@@ -32,7 +32,7 @@ Despliegue en Cloudflare Workers + D1 + R2 con un comando ([guía](docs/cloudfla
 git clone <este repo> && cd feelingmark
 echo "AUTH_TOKEN=$(openssl rand -hex 24)" > .env
 echo "DATA_DIR=/ruta/a/tu/disco/feelingmark" >> .env   # opcional, por defecto ./data
-docker compose up -d --build
+docker compose up -d
 ```
 
 Abre `http://localhost:8787` para el cliente web. En **Ajustes**, escribe la URL del servidor y tu token. La app móvil se conecta igual (usa la dirección de tu computador en la red local, p. ej. `http://192.168.1.10:8787`).
