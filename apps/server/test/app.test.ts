@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import sharp from "sharp";
 import { createApp } from "../src/app.ts";
@@ -83,4 +84,42 @@ test("nota por día: crear, aparece en el mes, borrar", async () => {
   assert.deepEqual((await (await app.request("/photos?month=2024-05", { headers: auth })).json()).notes, {});
   assert.equal((await put(42)).status, 400);
   assert.equal((await app.request("/days/2024-05-02", { method: "PUT", body: "{}" })).status, 401);
+});
+
+const hasFfmpeg = spawnSync("ffmpeg", ["-version"]).status === 0;
+
+async function seedMonth(month: string, n: number) {
+  for (let i = 0; i < n; i++) {
+    const png = new Uint8Array(await sharp({ create: { width: 64, height: 64, channels: 3, background: { r: 40 * i, g: 90, b: 100 + Number(month.slice(2, 4)) * 2 + Number(month.slice(5)) } } }).png().toBuffer());
+    await upload(png, { takenAt: `${month}-1${i}T12:00:00Z` });
+  }
+}
+
+test("enlace compartido: público, solo ese mes, revocable", async () => {
+  await seedMonth("2030-02", 2);
+  await seedMonth("2030-03", 1);
+  const share = await (await app.request("/albums/2030-02/share", { method: "POST", headers: auth })).json();
+  assert.match(share.id, /^[0-9a-f]{24}$/);
+  const page = await app.request(share.path); // sin token
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /2030-02/);
+  const febIds = Object.values((await (await app.request("/photos?month=2030-02", { headers: auth })).json()).days).flat() as number[];
+  const marIds = Object.values((await (await app.request("/photos?month=2030-03", { headers: auth })).json()).days).flat() as number[];
+  assert.equal((await app.request(`${share.path}/thumb/${febIds[0]}`)).status, 200);
+  assert.equal((await app.request(`${share.path}/photo/${marIds[0]}`)).status, 404); // otro mes
+  assert.equal((await app.request("/s/ffffffffffffffffffffffff")).status, 404);
+  assert.equal((await app.request("/albums/2030-02/share", { method: "POST" })).status, 401);
+  assert.equal((await app.request(`/shares/${share.id}`, { method: "DELETE", headers: auth })).status, 200);
+  assert.equal((await app.request(share.path)).status, 404);
+});
+
+test("video del mes: mp4 válido y cacheado", { skip: !hasFfmpeg && "ffmpeg no instalado" }, async () => {
+  await seedMonth("2031-04", 2);
+  const r = await app.request("/albums/2031-04/video", { headers: auth });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get("content-type"), "video/mp4");
+  const bytes = Buffer.from(await r.arrayBuffer());
+  assert.equal(bytes.subarray(4, 8).toString(), "ftyp");
+  assert.ok([...mem.keys()].some((k) => k.startsWith("videos/2031-04-")));
+  assert.equal((await app.request("/albums/2031-05/video", { headers: auth })).status, 404);
 });

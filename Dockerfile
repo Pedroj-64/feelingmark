@@ -5,7 +5,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile && pnpm --filter @feelingmark/mobile build:web
 
 FROM node:26-slim
-RUN npm i -g pnpm@12.14.0
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/* && npm i -g pnpm@12.14.0
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/server/package.json apps/server/

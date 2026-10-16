@@ -1,12 +1,14 @@
-import { createHash } from "node:crypto";
-import { timingSafeEqual } from "node:crypto";
-import { Hono } from "hono";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { Hono, type Context } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { cors } from "hono/cors";
 import exifr from "exifr";
 import sharp from "sharp";
 import type { Db } from "./db.ts";
 import type { StorageAdapter } from "./storage.ts";
+import { buildSlideshow } from "./video.ts";
+
+const MONTH = /^\d{4}-\d{2}$/;
 
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic" };
 
@@ -27,6 +29,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   app.use("/photos", auth); // la web estática (si se sirve) queda fuera del token
   app.use("/photos/*", auth);
   app.use("/days/*", auth);
+  app.use("/albums/*", auth);
+  app.use("/shares/*", auth);
 
   app.post("/photos", async (c) => {
     const form = await c.req.parseBody();
@@ -65,38 +69,88 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     return c.json({ ok: true });
   });
 
-  app.get("/photos/:id/file", async (c) => {
-    const row = db.prepare("SELECT key, mime FROM photos WHERE id = ?").get(Number(c.req.param("id")));
-    if (!row) return c.json({ error: "not found" }, 404);
+  type Asset = { data: Uint8Array; mime: string };
+  const CACHE = "private, max-age=31536000, immutable";
+  const send = (c: Context, a: Asset) => c.body(a.data as Uint8Array<ArrayBuffer>, 200, { "content-type": a.mime, "cache-control": CACHE });
+  // Cualquier error de almacenamiento (p. ej. disco extraíble desconectado) se responde 503.
+  const guard = (h: (c: Context) => Promise<Asset | null>) => async (c: Context) => {
     try {
-      return c.body((await storage.get(String(row.key))) as Uint8Array<ArrayBuffer>, 200, { "content-type": String(row.mime), "cache-control": "private, max-age=31536000, immutable" });
-    } catch {
-      return c.json({ error: "storage unavailable" }, 503); // p. ej. disco extraíble desconectado
-    }
-  });
-
-  // Miniatura 400x400 generada al primer uso y guardada junto a las fotos.
-  app.get("/photos/:id/thumb", async (c) => {
-    const row = db.prepare("SELECT key, hash, mime FROM photos WHERE id = ?").get(Number(c.req.param("id")));
-    if (!row) return c.json({ error: "not found" }, 404);
-    const headers = { "cache-control": "private, max-age=31536000, immutable" };
-    const tkey = `thumbs/${row.hash}.webp`;
-    try {
-      const cached = await storage.get(tkey).catch(() => null);
-      if (cached) return c.body(cached as Uint8Array<ArrayBuffer>, 200, { ...headers, "content-type": "image/webp" });
-      const original = await storage.get(String(row.key));
-      try {
-        const thumb = new Uint8Array(await sharp(original).rotate().resize(400, 400, { fit: "cover" }).webp({ quality: 78 }).toBuffer());
-        await storage.put(tkey, thumb);
-        return c.body(thumb as Uint8Array<ArrayBuffer>, 200, { ...headers, "content-type": "image/webp" });
-      } catch {
-        // formato que sharp no decodifica (p. ej. HEIC): se sirve el original
-        return c.body(original as Uint8Array<ArrayBuffer>, 200, { ...headers, "content-type": String(row.mime) });
-      }
+      const a = await h(c);
+      return a ? send(c, a) : c.json({ error: "not found" }, 404);
     } catch {
       return c.json({ error: "storage unavailable" }, 503);
     }
+  };
+
+  const fileOf = async (id: number): Promise<Asset | null> => {
+    const row = db.prepare("SELECT key, mime FROM photos WHERE id = ?").get(id);
+    return row ? { data: await storage.get(String(row.key)), mime: String(row.mime) } : null;
+  };
+
+  // Miniatura 400x400 generada al primer uso y guardada junto a las fotos.
+  const thumbOf = async (id: number): Promise<Asset | null> => {
+    const row = db.prepare("SELECT key, hash, mime FROM photos WHERE id = ?").get(id);
+    if (!row) return null;
+    const tkey = `thumbs/${row.hash}.webp`;
+    const cached = await storage.get(tkey).catch(() => null);
+    if (cached) return { data: cached, mime: "image/webp" };
+    const original = await storage.get(String(row.key));
+    try {
+      const thumb = new Uint8Array(await sharp(original).rotate().resize(400, 400, { fit: "cover" }).webp({ quality: 78 }).toBuffer());
+      await storage.put(tkey, thumb);
+      return { data: thumb, mime: "image/webp" };
+    } catch {
+      return { data: original, mime: String(row.mime) }; // formato que sharp no decodifica (p. ej. HEIC)
+    }
+  };
+
+  // Resumen en video del mes; se genera al pedirlo y se guarda mientras las fotos del mes no cambien.
+  // ponytail: sin cola; dos peticiones simultáneas generan dos veces. Añadir un lock si hace falta.
+  const videoOf = async (month: string): Promise<Asset | null> => {
+    const rows = db.prepare("SELECT id, key, hash FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id").all(month, `${month}\uffff`);
+    if (rows.length === 0) return null;
+    const vkey = `videos/${month}-${createHash("sha1").update(rows.map((r) => r.hash).join()).digest("hex").slice(0, 16)}.mp4`;
+    const cached = await storage.get(vkey).catch(() => null);
+    if (cached) return { data: cached, mime: "video/mp4" };
+    const data = await buildSlideshow(await Promise.all(rows.map((r) => storage.get(String(r.key)))));
+    await storage.put(vkey, data);
+    return { data, mime: "video/mp4" };
+  };
+
+  app.get("/photos/:id/file", guard((c) => fileOf(Number(c.req.param("id")))));
+  app.get("/photos/:id/thumb", guard((c) => thumbOf(Number(c.req.param("id")))));
+  app.get("/albums/:month/video", guard((c) => (MONTH.test(c.req.param("month") ?? "") ? videoOf(c.req.param("month") as string) : Promise.resolve(null))));
+
+  // Enlaces de solo lectura a un mes. El id aleatorio es el único secreto: quien lo tenga ve ese mes.
+  app.post("/albums/:month/share", (c) => {
+    const month = c.req.param("month");
+    if (!MONTH.test(month)) return c.json({ error: "month=YYYY-MM required" }, 400);
+    const id = randomBytes(12).toString("hex");
+    db.prepare("INSERT INTO shares (id, month) VALUES (?, ?)").run(id, month);
+    return c.json({ id, path: `/s/${id}` }, 201);
   });
+  app.delete("/shares/:id", (c) => (db.prepare("DELETE FROM shares WHERE id = ?").run(c.req.param("id")).changes ? c.json({ ok: true }) : c.json({ error: "not found" }, 404)));
+
+  const sharedMonth = (id: string) => db.prepare("SELECT month FROM shares WHERE id = ?").get(id)?.month as string | undefined;
+  const inMonth = (month: string, photoId: number) => !!db.prepare("SELECT 1 FROM photos WHERE id = ? AND taken_at >= ? AND taken_at < ?").get(photoId, month, `${month}\uffff`);
+
+  app.get("/s/:id", (c) => {
+    const month = sharedMonth(c.req.param("id"));
+    if (!month) return c.text("Not found", 404);
+    const es = (c.req.header("accept-language") ?? "").toLowerCase().startsWith("es");
+    const ids = db.prepare("SELECT id FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id").all(month, `${month}\uffff`).map((r) => Number(r.id));
+    const base = `/s/${c.req.param("id")}`;
+    const html = `<!doctype html><html lang="${es ? "es" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><title>Feelingmark ${month}</title>
+<style>body{margin:0;background:#F7F4EF;color:#1F1B16;font:16px system-ui,sans-serif}main{max-width:900px;margin:0 auto;padding:24px 16px}h1{font-weight:600;letter-spacing:-.4px}a.v{color:#C4573A;font-weight:600}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:20px}.g img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}@media(prefers-color-scheme:dark){body{background:#16130F;color:#F2EDE4}a.v{color:#E07A5C}}</style></head><body><main><h1>${month}</h1><a class="v" href="${base}/video">${es ? "Ver el resumen en video" : "Watch the video recap"}</a><div class="g">${ids.map((i) => `<a href="${base}/photo/${i}"><img loading="lazy" src="${base}/thumb/${i}" alt=""></a>`).join("")}</div></main></body></html>`;
+    return c.html(html);
+  });
+  const shared = (h: (c: Context, month: string) => Promise<Asset | null>) => guard(async (c) => {
+    const month = sharedMonth(c.req.param("id") ?? "");
+    return month ? h(c, month) : null;
+  });
+  app.get("/s/:id/thumb/:photo", shared((c, m) => (inMonth(m, Number(c.req.param("photo"))) ? thumbOf(Number(c.req.param("photo"))) : Promise.resolve(null))));
+  app.get("/s/:id/photo/:photo", shared((c, m) => (inMonth(m, Number(c.req.param("photo"))) ? fileOf(Number(c.req.param("photo"))) : Promise.resolve(null))));
+  app.get("/s/:id/video", shared((_, m) => videoOf(m)));
 
   app.patch("/photos/:id", async (c) => {
     const { takenAt: t } = await c.req.json<{ takenAt?: string }>().catch(() => ({} as { takenAt?: string }));
