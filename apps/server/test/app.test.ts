@@ -165,3 +165,16 @@ test("video del mes: mp4 válido y cacheado", { skip: !hasFfmpeg && "ffmpeg no i
   assert.ok([...mem.keys()].some((k) => k.startsWith("videos/2031-04-")));
   assert.equal((await app.request("/albums/2031-05/video", { headers: auth })).status, 404);
 });
+
+test("sin ffmpeg el video responde 501 con un mensaje claro", async () => {
+  await seedMonth("2032-06", 1);
+  const path = process.env.PATH;
+  process.env.PATH = "";
+  try {
+    const r = await app.request("/albums/2032-06/video", { headers: auth });
+    assert.equal(r.status, 501);
+    assert.match((await r.json()).error, /ffmpeg/);
+  } finally {
+    process.env.PATH = path;
+  }
+});

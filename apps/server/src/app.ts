@@ -82,7 +82,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     try {
       const a = await h(c);
       return a ? send(c, a) : c.json({ error: "not found" }, 404);
-    } catch {
+    } catch (e) {
+      if ((e as Error).message === "ffmpeg-missing") return c.json({ error: "ffmpeg is not installed on the server" }, 501);
       return c.json({ error: "storage unavailable" }, 503);
     }
   };

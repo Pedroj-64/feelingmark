@@ -26,21 +26,26 @@ export async function buildSlideshow(images: Uint8Array[]): Promise<Uint8Array> 
     }
     if (n === 0) throw new Error("no decodable images");
     const out = join(dir, "out.mp4");
-    await run("ffmpeg", [
-      "-loglevel",
-      "error",
-      "-framerate",
-      "1/2",
-      "-i",
-      join(dir, "%04d.jpg"),
-      "-vf",
-      "format=yuv420p",
-      "-r",
-      "25",
-      "-movflags",
-      "+faststart",
-      out,
-    ]);
+    try {
+      await run("ffmpeg", [
+        "-loglevel",
+        "error",
+        "-framerate",
+        "1/2",
+        "-i",
+        join(dir, "%04d.jpg"),
+        "-vf",
+        "format=yuv420p",
+        "-r",
+        "25",
+        "-movflags",
+        "+faststart",
+        out,
+      ]);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === "ENOENT") throw new Error("ffmpeg-missing");
+      throw e;
+    }
     return new Uint8Array(await readFile(out));
   } finally {
     await rm(dir, { recursive: true, force: true });
