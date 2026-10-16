@@ -22,7 +22,7 @@ Open the web client or the Android app → **Settings** → enter the server URL
 Download the signed APK from the [Releases](https://github.com/Pedroj-64/feelingmark/releases) page, or build it: `cd apps/mobile && npx expo prebuild --platform android && cd android && ./gradlew assembleRelease` (JDK 21 + Android SDK).
 
 ### Video recap
-The monthly video needs **no API key, account or paid service**: the server builds it locally with `ffmpeg` (a photo slideshow, 2 s per photo, no music). The Docker image already includes ffmpeg; without Docker install it (`apt install ffmpeg`, `brew install ffmpeg`, `pacman -S ffmpeg`). If it is missing, the endpoint answers `501`. Not available on a Cloudflare Workers deployment.
+The monthly video needs **no API key, account or paid service**: the server builds it locally with `ffmpeg` (a photo slideshow, 3 s per photo with soft cross-fades). **Optional music:** set `VIDEO_MUSIC_FILE=/path/to/audio.mp3` (use audio you have the rights to; it loops and fades out at the end). The Docker image already includes ffmpeg; without Docker install it (`apt install ffmpeg`, `brew install ffmpeg`, `pacman -S ffmpeg`). If it is missing, the endpoint answers `501`. Not available on a Cloudflare Workers deployment.
 
 ### Removable drive
 Mount it and point `DATA_DIR` (Docker) or `STORAGE_PATH` at it. If the drive is unplugged the server answers `503` for photos and the app keeps working with what it has cached; plug it back in and everything returns.
@@ -49,7 +49,7 @@ Abre el cliente web o la app Android → **Ajustes** → escribe la URL del serv
 Descarga el APK firmado desde [Releases](https://github.com/Pedroj-64/feelingmark/releases), o compílalo: `cd apps/mobile && npx expo prebuild --platform android && cd android && ./gradlew assembleRelease` (JDK 21 + Android SDK).
 
 ### Resumen en video
-El video mensual **no necesita ninguna API key, cuenta ni servicio de pago**: el servidor lo genera localmente con `ffmpeg` (presentación de fotos, 2 s por foto, sin música). La imagen Docker ya incluye ffmpeg; sin Docker instálalo (`apt install ffmpeg`, `brew install ffmpeg`, `pacman -S ffmpeg`). Si falta, el endpoint responde `501`. No está disponible en un despliegue de Cloudflare Workers.
+El video mensual **no necesita ninguna API key, cuenta ni servicio de pago**: el servidor lo genera localmente con `ffmpeg` (presentación de fotos, 3 s por foto con fundidos suaves). **Música opcional:** define `VIDEO_MUSIC_FILE=/ruta/a/audio.mp3` (usa un audio del que tengas derechos; se repite y se apaga al final). La imagen Docker ya incluye ffmpeg; sin Docker instálalo (`apt install ffmpeg`, `brew install ffmpeg`, `pacman -S ffmpeg`). Si falta, el endpoint responde `501`. No está disponible en un despliegue de Cloudflare Workers.
 
 ### Disco extraíble
 Móntalo y apunta `DATA_DIR` (Docker) o `STORAGE_PATH` a él. Si lo desconectas, el servidor responde `503` para las fotos y la app sigue con lo que tiene en caché; al reconectarlo todo vuelve.

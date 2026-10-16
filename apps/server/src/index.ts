@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import { dirname } from "node:path";
 import { serve } from "@hono/node-server";
@@ -47,8 +47,14 @@ function pickStorage(db: Db) {
   });
 }
 
+// Música opcional para el video del mes: VIDEO_MUSIC_FILE=/ruta/a/tu/audio.mp3 (usa un audio del que tengas derechos).
+let music = process.env.VIDEO_MUSIC_FILE;
+if (music && !existsSync(music)) {
+  console.warn(`VIDEO_MUSIC_FILE no existe / not found: ${music} (el video saldrá sin música / video will have no music)`);
+  music = undefined;
+}
 const db = await openDb(dbPath);
-const app = createApp({ db, storage: pickStorage(db), token, thumbnail, slideshow: buildSlideshow });
+const app = createApp({ db, storage: pickStorage(db), token, thumbnail, slideshow: (imgs) => buildSlideshow(imgs, { music }) });
 if (process.env.STORAGE_DRIVER === "gdrive") {
   const redirectBase = process.env.GOOGLE_REDIRECT_BASE || `http://localhost:${process.env.PORT ?? 8787}`;
   mountGoogleOAuth(app, { db, creds: googleCreds(), redirectBase, token });

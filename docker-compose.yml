@@ -6,6 +6,7 @@ services:
       - "8787:8787"
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-}
+      # VIDEO_MUSIC_FILE: /data/musica.mp3   # copia tu audio dentro de DATA_DIR
       AUTH_TOKEN: ${AUTH_TOKEN:?define AUTH_TOKEN en .env / set AUTH_TOKEN in .env}
     volumes:
       # Cambia la parte izquierda por tu disco, p. ej. /mnt/mi-disco/feelingmark

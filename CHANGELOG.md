@@ -5,6 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Unreleased]
 
 ### Added
+- Resumen en video con fundidos entre fotos y música opcional (`VIDEO_MUSIC_FILE`).
 - Pestaña Álbumes: un álbum automático por mes con portada y número de fotos; al tocarlo abre ese mes en el calendario.
 - Sin conexión: el calendario muestra lo último visto de cada mes (hasta 24) y las miniaturas ya vistas quedan en la caché de disco.
 
