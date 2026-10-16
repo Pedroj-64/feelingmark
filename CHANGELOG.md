@@ -4,10 +4,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
 ### Added
 - Resumen en video con fundidos entre fotos y música opcional (`VIDEO_MUSIC_FILE`).
 - Pestaña Álbumes: un álbum automático por mes con portada y número de fotos; al tocarlo abre ese mes en el calendario.
 - Sin conexión: el calendario muestra lo último visto de cada mes (hasta 24) y las miniaturas ya vistas quedan en la caché de disco.
+
+### Fixed
+- Cloudflare: `/albums` se atendía como página web en lugar de llegar al Worker; ahora hay un test que vigila las rutas.
 
 ## [0.1.2] - 2026-10-16
 
