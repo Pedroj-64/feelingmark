@@ -1,0 +1,20 @@
+name: Feature request / Proponer una mejora
+description: An idea to improve Feelingmark / Una idea para mejorar Feelingmark
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve? / ¿Qué problema resolvería?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea / Tu idea
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered / Alternativas que consideraste

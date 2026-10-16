@@ -1,0 +1,43 @@
+name: Bug report / Reportar un error
+description: Something does not work as expected / Algo no funciona como se espera
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please **do not paste tokens, passwords or your pairing QR / Google credentials**. / **No pegues tokens, contraseñas, el QR de emparejamiento ni credenciales de Google.**
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / ¿Qué pasó?
+      description: What you expected and what you got. / Qué esperabas y qué obtuviste.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Pasos para reproducirlo
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen? / ¿Dónde ocurre?
+      options: [Android app, Web client, Server (Docker), Server (Node), Server (Cloudflare), Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: storage
+    attributes:
+      label: Storage / Almacenamiento
+      options: [Local disk, S3 / R2 / B2 / MinIO, Google Drive, Not sure]
+  - type: input
+    id: version
+    attributes:
+      label: Version / Versión
+      description: App version (Settings) or release tag, e.g. v0.1.2
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots / Registros o capturas
+      render: text

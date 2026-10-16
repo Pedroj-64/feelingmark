@@ -1,0 +1,5 @@
+# Code of Conduct / Código de conducta
+
+**EN** — Be respectful and constructive. Harassment, personal attacks and discriminatory language are not tolerated. Maintainers may remove comments, issues or contributions that break this rule and may block repeat offenders. Report problems through a private [security advisory](https://github.com/Pedroj-64/feelingmark/security/advisories/new) or by contacting the maintainer on GitHub. This text is inspired by the [Contributor Covenant](https://www.contributor-covenant.org/).
+
+**ES** — Sé respetuoso y constructivo. No se tolera el acoso, los ataques personales ni el lenguaje discriminatorio. Quienes mantienen el proyecto pueden eliminar comentarios, issues o contribuciones que incumplan esta regla y bloquear a quien reincida. Reporta los problemas en privado mediante un [aviso de seguridad](https://github.com/Pedroj-64/feelingmark/security/advisories/new) o escribiendo a quien mantiene el proyecto en GitHub. Texto inspirado en el [Contributor Covenant](https://www.contributor-covenant.org/).

@@ -20,7 +20,12 @@ Nace como alternativa abierta para quienes usaban apps como Dots Memories y no q
 - Las fotos duplicadas se detectan y se omiten.
 - Tu almacenamiento, tus reglas: los archivos viven en el disco que elijas (sirve un disco extraíble). La app no aloja nada por ti.
 - Miniaturas generadas por tu servidor; la app móvil habla con él por HTTP con un token privado.
-- Una nota de texto por día, un resumen en video del mes y enlaces de solo lectura para compartir un mes.
+- Una nota de texto por día y enlaces de solo lectura para compartir un mes.
+- **Pestaña Álbumes:** un álbum automático por mes, con portada y número de fotos.
+- **Resumen en video del mes** con fundidos suaves y música opcional (ffmpeg, servidores Docker/Node).
+- **Subidas fiables:** las fotos entran en una cola con reintentos; lo que falla (sin red) se sube solo la próxima vez que abras la app.
+- **Funciona sin conexión:** el calendario muestra lo último visto de cada mes y las miniaturas que ya viste si el servidor no responde.
+- Empareja el teléfono escaneando el QR que imprime el servidor al arrancar.
 - Modo claro/oscuro, español e inglés (se aceptan más idiomas).
 - Almacenamiento en disco local o en cualquier servicio compatible con S3 (Cloudflare R2, Backblaze B2, MinIO).
 
@@ -58,7 +63,7 @@ La configuración va en variables de entorno; mira [`.env.example`](.env.example
 
 ## Contribuir
 
-Issues y PRs son bienvenidos. Para añadir un idioma, copia `apps/mobile/src/i18n/en.ts` a `xx.ts` y regístralo en `i18n/index.ts`.
+Issues y PRs son bienvenidos (ver [CONTRIBUTING](CONTRIBUTING.md) y el [Código de conducta](CODE_OF_CONDUCT.md)). Para añadir un idioma, copia `apps/mobile/src/i18n/en.ts` a `xx.ts` y regístralo en `i18n/index.ts`.
 
 Partes de este proyecto se construyeron con ayuda de un asistente de IA.
 

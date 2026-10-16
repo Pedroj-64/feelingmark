@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability / Vulnerabilidad de seguridad
+    url: https://github.com/Pedroj-64/feelingmark/security/advisories/new
+    about: Report it privately, not as a public issue. / Repórtala en privado, no como issue público.
