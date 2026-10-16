@@ -4,17 +4,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-16
+
 ### Added
 - Despliegue en Cloudflare (Worker + D1 + R2 + web) con `pnpm deploy:cloudflare`.
 - La app sube una miniatura generada en el dispositivo.
 - Emparejar el teléfono con un QR impreso por el servidor (con pantalla de confirmación).
-
-### Changed
-- El núcleo del servidor es asíncrono y no depende de APIs de Node; la base de v0.1.0 se migra sola.
-
-## [0.1.0] - 2026-10-16
-
-### Added
+- Notas de texto por día, resumen en video del mes (ffmpeg local, sin claves) y enlaces públicos de solo lectura para compartir un mes.
+- El núcleo del servidor es asíncrono y no depende de APIs de Node (corre en Node y en Workers).
 - Servidor Hono con SQLite: subida de fotos, fecha desde EXIF, duplicados por hash, calendario por mes, mover foto de día, miniaturas webp.
 - Almacenamiento intercambiable: disco local y S3-compatible (R2, B2, MinIO).
 - Cliente Expo (móvil y web): calendario, vista de día, subida desde la galería, ajustes de conexión, es/en, modo oscuro.
