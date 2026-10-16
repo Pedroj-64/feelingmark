@@ -20,9 +20,11 @@ Nace como alternativa abierta para quienes usaban apps como Dots Memories y no q
 - Las fotos duplicadas se detectan y se omiten.
 - Tu almacenamiento, tus reglas: los archivos viven en el disco que elijas (sirve un disco extraíble). La app no aloja nada por ti.
 - Miniaturas generadas por tu servidor; la app móvil habla con él por HTTP con un token privado.
+- Una nota de texto por día, un resumen en video del mes y enlaces de solo lectura para compartir un mes.
 - Modo claro/oscuro, español e inglés (se aceptan más idiomas).
+- Almacenamiento en disco local o en cualquier servicio compatible con S3 (Cloudflare R2, Backblaze B2, MinIO).
 
-Planeado: almacenamiento S3/R2, despliegue en Cloudflare, álbumes mensuales y mini-videos, enlaces para compartir, Google Drive (experimental). Ver [`docs/PLAN.md`](docs/PLAN.md).
+Planeado: despliegue en Cloudflare Workers/D1, Google Drive (experimental), emparejar con QR. Guías: [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Hoja de ruta: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Inicio rápido (Docker)
 
