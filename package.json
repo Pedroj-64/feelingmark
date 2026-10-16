@@ -2,6 +2,7 @@
   "name": "feelingmark",
   "private": true,
   "version": "0.0.0",
+  "license": "AGPL-3.0-only",
   "packageManager": "pnpm@12.14.0",
   "scripts": {
     "test": "pnpm -r test",
