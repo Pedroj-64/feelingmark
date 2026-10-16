@@ -72,6 +72,7 @@ export default function Day() {
                   source={api.fileSource(id)}
                   style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }}
                   contentFit="cover"
+                  cachePolicy="disk"
                 />
                 <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
               </View>

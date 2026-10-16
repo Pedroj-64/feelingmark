@@ -12,8 +12,8 @@ export function createApi({ url, token }: Conn) {
   const headers = { authorization: `Bearer ${token}` };
   return {
     headers,
-    thumbSource: (id: number) => ({ uri: `${url}/photos/${id}/thumb`, headers }),
-    fileSource: (id: number) => ({ uri: `${url}/photos/${id}/file`, headers }),
+    thumbSource: (id: number) => ({ uri: `${url}/photos/${id}/thumb`, headers, cacheKey: `${url}#thumb${id}` }),
+    fileSource: (id: number) => ({ uri: `${url}/photos/${id}/file`, headers, cacheKey: `${url}#file${id}` }),
     async month(ym: string): Promise<MonthData> {
       const r = await fetch(`${url}/photos?month=${ym}`, { headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);

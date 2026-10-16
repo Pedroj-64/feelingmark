@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+### Added
+- Sin conexión: el calendario muestra lo último visto de cada mes (hasta 24) y las miniaturas ya vistas quedan en la caché de disco.
+
 ## [0.1.2] - 2026-10-16
 
 ### Added

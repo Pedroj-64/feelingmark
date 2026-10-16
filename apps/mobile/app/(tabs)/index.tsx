@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api, type MonthData } from "../../src/api";
 import { monthGrid, shiftMonth } from "../../src/calendar";
+import { monthCache } from "../../src/month-cache-store";
 import { drain, enqueue } from "../../src/queue";
 import { queueStore } from "../../src/queue-store";
 import { loadConn } from "../../src/settings";
@@ -30,9 +31,14 @@ export default function CalendarScreen() {
   const load = useCallback(
     async (a: Api, m: string) => {
       try {
-        setData(await a.month(m));
+        const fresh = await a.month(m);
+        setData(fresh);
         setStatus(null);
+        monthCache.set(m, fresh).catch(() => undefined);
       } catch {
+        // Sin servidor: se muestra lo último que se vio de ese mes (las miniaturas ya vistas están en la caché de disco).
+        const cached = await monthCache.get(m).catch(() => undefined);
+        if (cached) setData(cached);
         setStatus(t("calendar.offline"));
       }
     },
@@ -162,7 +168,9 @@ export default function CalendarScreen() {
                         { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids || note ? c.surface : "transparent" },
                       ]}
                     >
-                      {ids && api && <Image source={api.thumbSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" />}
+                      {ids && api && (
+                        <Image source={api.thumbSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="disk" />
+                      )}
                       <Text style={[s.num, { color: ids ? "#fff" : c.muted }]}>{+d.slice(8)}</Text>
                       {note && <View style={[s.noteDot, { backgroundColor: ids ? "#fff" : c.accent }]} />}
                       {ids && ids.length > 1 && <Text style={s.count}>{ids.length}</Text>}
