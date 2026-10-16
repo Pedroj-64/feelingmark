@@ -19,7 +19,12 @@ export default function Day() {
   useEffect(() => void loadConn().then((conn) => conn && setApi(createApi(conn))), []);
 
   const photos = (ids ?? "").split(",").filter(Boolean).map(Number);
-  const rawTitle = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const rawTitle = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
   const w = Math.min(width, 720) - 32;
 
@@ -33,7 +38,12 @@ export default function Day() {
         <TextInput
           value={note}
           onChangeText={setNote}
-          onBlur={() => api?.saveNote(date, note).then(() => setNoteErr(false), () => setNoteErr(true))}
+          onBlur={() =>
+            api?.saveNote(date, note).then(
+              () => setNoteErr(false),
+              () => setNoteErr(true),
+            )
+          }
           placeholder={t("day.notePlaceholder")}
           placeholderTextColor={c.muted}
           multiline
@@ -42,12 +52,17 @@ export default function Day() {
         />
         {noteErr && <Text style={{ color: c.accent, marginBottom: 12 }}>{t("common.error")}</Text>}
         <View style={{ gap: 20 }}>
-          {api && photos.map((id) => (
-            <View key={id} style={{ gap: 8 }}>
-              <Image source={api.fileSource(id)} style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }} contentFit="cover" />
-              <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
-            </View>
-          ))}
+          {api &&
+            photos.map((id) => (
+              <View key={id} style={{ gap: 8 }}>
+                <Image
+                  source={api.fileSource(id)}
+                  style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }}
+                  contentFit="cover"
+                />
+                <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
+              </View>
+            ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -72,7 +87,12 @@ function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promis
   return (
     <View>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <TextInput value={v} onChangeText={setV} autoCapitalize="none" style={[s.input, { color: c.ink, borderColor: c.line, backgroundColor: c.surface }]} />
+        <TextInput
+          value={v}
+          onChangeText={setV}
+          autoCapitalize="none"
+          style={[s.input, { color: c.ink, borderColor: c.line, backgroundColor: c.surface }]}
+        />
         <Pressable
           onPress={() => (ok ? onMove(v).catch(() => setMsg(t("common.error"))) : setMsg(t("day.invalid")))}
           style={({ pressed }) => [s.moveBtn, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}

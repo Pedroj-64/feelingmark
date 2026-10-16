@@ -19,8 +19,11 @@ function pickStorage() {
   if (process.env.STORAGE_DRIVER !== "s3") return localStorageAdapter(process.env.STORAGE_PATH ?? "./data/photos");
   const need = (k: string) => process.env[k] || (console.error(`Falta / missing ${k}`), process.exit(1));
   return s3StorageAdapter({
-    endpoint: need("S3_ENDPOINT"), bucket: need("S3_BUCKET"),
-    accessKeyId: need("S3_ACCESS_KEY_ID"), secretAccessKey: need("S3_SECRET_ACCESS_KEY"), region: process.env.S3_REGION,
+    endpoint: need("S3_ENDPOINT"),
+    bucket: need("S3_BUCKET"),
+    accessKeyId: need("S3_ACCESS_KEY_ID"),
+    secretAccessKey: need("S3_SECRET_ACCESS_KEY"),
+    region: process.env.S3_REGION,
   });
 }
 

@@ -43,7 +43,9 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     const taken = await takenAt(bytes, form.takenAt, file.lastModified);
     const key = `${taken.slice(0, 7)}/${hash}.${EXT[file.type]}`;
     await storage.put(key, bytes);
-    const { lastInsertRowid } = db.prepare("INSERT INTO photos (key, hash, mime, taken_at) VALUES (?,?,?,?)").run(key, hash, file.type, taken);
+    const { lastInsertRowid } = db
+      .prepare("INSERT INTO photos (key, hash, mime, taken_at) VALUES (?,?,?,?)")
+      .run(key, hash, file.type, taken);
     return c.json({ id: Number(lastInsertRowid), takenAt: taken, duplicate: false }, 201);
   });
 
@@ -51,7 +53,9 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   app.get("/photos", (c) => {
     const month = c.req.query("month") ?? "";
     if (!/^\d{4}-\d{2}$/.test(month)) return c.json({ error: "month=YYYY-MM required" }, 400);
-    const rows = db.prepare("SELECT id, taken_at FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at").all(`${month}`, `${month}￿`);
+    const rows = db
+      .prepare("SELECT id, taken_at FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at")
+      .all(`${month}`, `${month}￿`);
     const days: Record<string, number[]> = {};
     for (const r of rows) (days[String(r.taken_at).slice(0, 10)] ??= []).push(Number(r.id));
     const notes: Record<string, string> = {};
@@ -63,7 +67,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   app.put("/days/:date", async (c) => {
     const date = c.req.param("date");
     const { note } = await c.req.json<{ note?: unknown }>().catch(() => ({ note: undefined }));
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || typeof note !== "string" || note.length > 5000) return c.json({ error: "invalid date or note" }, 400);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || typeof note !== "string" || note.length > 5000)
+      return c.json({ error: "invalid date or note" }, 400);
     if (note.trim() === "") db.prepare("DELETE FROM days WHERE date = ?").run(date);
     else db.prepare("INSERT INTO days (date, note) VALUES (?, ?) ON CONFLICT(date) DO UPDATE SET note = excluded.note").run(date, note);
     return c.json({ ok: true });
@@ -107,9 +112,14 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   // Resumen en video del mes; se genera al pedirlo y se guarda mientras las fotos del mes no cambien.
   // ponytail: sin cola; dos peticiones simultáneas generan dos veces. Añadir un lock si hace falta.
   const videoOf = async (month: string): Promise<Asset | null> => {
-    const rows = db.prepare("SELECT id, key, hash FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id").all(month, `${month}\uffff`);
+    const rows = db
+      .prepare("SELECT id, key, hash FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id")
+      .all(month, `${month}\uffff`);
     if (rows.length === 0) return null;
-    const vkey = `videos/${month}-${createHash("sha1").update(rows.map((r) => r.hash).join()).digest("hex").slice(0, 16)}.mp4`;
+    const vkey = `videos/${month}-${createHash("sha1")
+      .update(rows.map((r) => r.hash).join())
+      .digest("hex")
+      .slice(0, 16)}.mp4`;
     const cached = await storage.get(vkey).catch(() => null);
     if (cached) return { data: cached, mime: "video/mp4" };
     const data = await buildSlideshow(await Promise.all(rows.map((r) => storage.get(String(r.key)))));
@@ -117,9 +127,18 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     return { data, mime: "video/mp4" };
   };
 
-  app.get("/photos/:id/file", guard((c) => fileOf(Number(c.req.param("id")))));
-  app.get("/photos/:id/thumb", guard((c) => thumbOf(Number(c.req.param("id")))));
-  app.get("/albums/:month/video", guard((c) => (MONTH.test(c.req.param("month") ?? "") ? videoOf(c.req.param("month") as string) : Promise.resolve(null))));
+  app.get(
+    "/photos/:id/file",
+    guard((c) => fileOf(Number(c.req.param("id")))),
+  );
+  app.get(
+    "/photos/:id/thumb",
+    guard((c) => thumbOf(Number(c.req.param("id")))),
+  );
+  app.get(
+    "/albums/:month/video",
+    guard((c) => (MONTH.test(c.req.param("month") ?? "") ? videoOf(c.req.param("month") as string) : Promise.resolve(null))),
+  );
 
   // Enlaces de solo lectura a un mes. El id aleatorio es el único secreto: quien lo tenga ve ese mes.
   app.post("/albums/:month/share", (c) => {
@@ -131,31 +150,49 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     db.prepare("INSERT INTO shares (id, month) VALUES (?, ?)").run(id, month);
     return c.json({ id, path: `/s/${id}` }, 201);
   });
-  app.delete("/shares/:id", (c) => (db.prepare("DELETE FROM shares WHERE id = ?").run(c.req.param("id")).changes ? c.json({ ok: true }) : c.json({ error: "not found" }, 404)));
+  app.delete("/shares/:id", (c) =>
+    db.prepare("DELETE FROM shares WHERE id = ?").run(c.req.param("id")).changes
+      ? c.json({ ok: true })
+      : c.json({ error: "not found" }, 404),
+  );
 
   const sharedMonth = (id: string) => db.prepare("SELECT month FROM shares WHERE id = ?").get(id)?.month as string | undefined;
-  const inMonth = (month: string, photoId: number) => !!db.prepare("SELECT 1 FROM photos WHERE id = ? AND taken_at >= ? AND taken_at < ?").get(photoId, month, `${month}\uffff`);
+  const inMonth = (month: string, photoId: number) =>
+    !!db.prepare("SELECT 1 FROM photos WHERE id = ? AND taken_at >= ? AND taken_at < ?").get(photoId, month, `${month}\uffff`);
 
   app.get("/s/:id", (c) => {
     const month = sharedMonth(c.req.param("id"));
     if (!month) return c.text("Not found", 404);
     const es = (c.req.header("accept-language") ?? "").toLowerCase().startsWith("es");
-    const ids = db.prepare("SELECT id FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id").all(month, `${month}\uffff`).map((r) => Number(r.id));
+    const ids = db
+      .prepare("SELECT id FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id")
+      .all(month, `${month}\uffff`)
+      .map((r) => Number(r.id));
     const base = `/s/${c.req.param("id")}`;
     const html = `<!doctype html><html lang="${es ? "es" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><title>Feelingmark ${month}</title>
 <style>body{margin:0;background:#F7F4EF;color:#1F1B16;font:16px system-ui,sans-serif}main{max-width:900px;margin:0 auto;padding:24px 16px}h1{font-weight:600;letter-spacing:-.4px}a.v{color:#C4573A;font-weight:600}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:20px}.g img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}@media(prefers-color-scheme:dark){body{background:#16130F;color:#F2EDE4}a.v{color:#E07A5C}}</style></head><body><main><h1>${month}</h1><a class="v" href="${base}/video">${es ? "Ver el resumen en video" : "Watch the video recap"}</a><div class="g">${ids.map((i) => `<a href="${base}/photo/${i}"><img loading="lazy" src="${base}/thumb/${i}" alt=""></a>`).join("")}</div></main></body></html>`;
     return c.html(html);
   });
-  const shared = (h: (c: Context, month: string) => Promise<Asset | null>) => guard(async (c) => {
-    const month = sharedMonth(c.req.param("id") ?? "");
-    return month ? h(c, month) : null;
-  });
-  app.get("/s/:id/thumb/:photo", shared((c, m) => (inMonth(m, Number(c.req.param("photo"))) ? thumbOf(Number(c.req.param("photo"))) : Promise.resolve(null))));
-  app.get("/s/:id/photo/:photo", shared((c, m) => (inMonth(m, Number(c.req.param("photo"))) ? fileOf(Number(c.req.param("photo"))) : Promise.resolve(null))));
-  app.get("/s/:id/video", shared((_, m) => videoOf(m)));
+  const shared = (h: (c: Context, month: string) => Promise<Asset | null>) =>
+    guard(async (c) => {
+      const month = sharedMonth(c.req.param("id") ?? "");
+      return month ? h(c, month) : null;
+    });
+  app.get(
+    "/s/:id/thumb/:photo",
+    shared((c, m) => (inMonth(m, Number(c.req.param("photo"))) ? thumbOf(Number(c.req.param("photo"))) : Promise.resolve(null))),
+  );
+  app.get(
+    "/s/:id/photo/:photo",
+    shared((c, m) => (inMonth(m, Number(c.req.param("photo"))) ? fileOf(Number(c.req.param("photo"))) : Promise.resolve(null))),
+  );
+  app.get(
+    "/s/:id/video",
+    shared((_, m) => videoOf(m)),
+  );
 
   app.patch("/photos/:id", async (c) => {
-    const { takenAt: t } = await c.req.json<{ takenAt?: string }>().catch(() => ({} as { takenAt?: string }));
+    const { takenAt: t } = await c.req.json<{ takenAt?: string }>().catch(() => ({}) as { takenAt?: string });
     if (!t || Number.isNaN(Date.parse(t))) return c.json({ error: "takenAt ISO date required" }, 400);
     const r = db.prepare("UPDATE photos SET taken_at = ? WHERE id = ?").run(new Date(t).toISOString(), Number(c.req.param("id")));
     return r.changes ? c.json({ ok: true }) : c.json({ error: "not found" }, 404);

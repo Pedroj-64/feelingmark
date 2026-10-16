@@ -20,12 +20,24 @@ export default function Settings() {
         <Text style={[s.title, { color: c.ink }]}>{t("settings.title")}</Text>
         <Text style={{ color: c.muted, marginBottom: 24 }}>{t("settings.hint")}</Text>
         <Text style={[s.label, { color: c.muted }]}>{t("settings.url")}</Text>
-        <TextInput style={input} value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="http://192.168.1.10:8787" placeholderTextColor={c.muted} />
+        <TextInput
+          style={input}
+          value={url}
+          onChangeText={setUrl}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          placeholder="http://192.168.1.10:8787"
+          placeholderTextColor={c.muted}
+        />
         <Text style={[s.label, { color: c.muted }]}>{t("settings.token")}</Text>
         <TextInput style={input} value={token} onChangeText={setToken} autoCapitalize="none" autoCorrect={false} secureTextEntry />
         <Pressable
           style={({ pressed }) => [s.btn, { backgroundColor: c.accent, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-          onPress={async () => { await saveConn({ url, token }); setSaved(true); }}
+          onPress={async () => {
+            await saveConn({ url, token });
+            setSaved(true);
+          }}
         >
           <Text style={{ color: c.onAccent, fontWeight: "600" }}>{saved ? t("settings.saved") : t("settings.save")}</Text>
         </Pressable>

@@ -21,11 +21,19 @@ export function createApi({ url, token }: Conn) {
       return `${url}${(await r.json()).path}`;
     },
     async saveNote(date: string, note: string) {
-      const r = await fetch(`${url}/days/${date}`, { method: "PUT", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ note }) });
+      const r = await fetch(`${url}/days/${date}`, {
+        method: "PUT",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ note }),
+      });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
     },
     async move(id: number, date: string) {
-      const r = await fetch(`${url}/photos/${id}`, { method: "PATCH", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ takenAt: date }) });
+      const r = await fetch(`${url}/photos/${id}`, {
+        method: "PATCH",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ takenAt: date }),
+      });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
     },
     async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File; takenAt?: string }) {

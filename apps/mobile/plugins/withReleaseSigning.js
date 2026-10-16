@@ -16,11 +16,11 @@ module.exports = (config) =>
                 keyAlias System.getenv("FEELINGMARK_KEY_ALIAS") ?: "upload"
                 keyPassword System.getenv("FEELINGMARK_KEY_PASSWORD")
             }
-        }`
+        }`,
       )
       .replace(
         /(release \{[\s\S]*?)signingConfig signingConfigs\.debug/,
-        `$1signingConfig System.getenv("FEELINGMARK_KEYSTORE") ? signingConfigs.release : signingConfigs.debug`
+        `$1signingConfig System.getenv("FEELINGMARK_KEYSTORE") ? signingConfigs.release : signingConfigs.debug`,
       );
     return c;
   });

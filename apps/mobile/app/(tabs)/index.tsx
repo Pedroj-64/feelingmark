@@ -24,29 +24,40 @@ export default function CalendarScreen() {
   const [api, setApi] = useState<Api | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const load = useCallback(async (a: Api, m: string) => {
-    try {
-      setData(await a.month(m));
-      setStatus(null);
-    } catch {
-      setStatus(t("calendar.offline"));
-    }
-  }, [t]);
+  const load = useCallback(
+    async (a: Api, m: string) => {
+      try {
+        setData(await a.month(m));
+        setStatus(null);
+      } catch {
+        setStatus(t("calendar.offline"));
+      }
+    },
+    [t],
+  );
 
-  useFocusEffect(useCallback(() => {
-    loadConn().then((conn) => {
-      if (!conn) return setStatus(t("settings.title"));
-      const a = createApi(conn);
-      setApi(a);
-      load(a, ym);
-    });
-  }, [ym, load, t]));
+  useFocusEffect(
+    useCallback(() => {
+      loadConn().then((conn) => {
+        if (!conn) return setStatus(t("settings.title"));
+        const a = createApi(conn);
+        setApi(a);
+        load(a, ym);
+      });
+    }, [ym, load, t]),
+  );
 
   const cell = Math.min(width, 720) / 7;
   const grid = useMemo(() => monthGrid(+ym.slice(0, 4), +ym.slice(5), 1), [ym]);
   const rawTitle = new Date(`${ym}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long", year: "numeric" });
   const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
-  const weekdays = useMemo(() => Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(i18n.language, { weekday: "narrow", timeZone: "UTC" })), [i18n.language]);
+  const weekdays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) =>
+        new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(i18n.language, { weekday: "narrow", timeZone: "UTC" }),
+      ),
+    [i18n.language],
+  );
 
   async function add() {
     if (!api) return;
@@ -54,7 +65,14 @@ export default function CalendarScreen() {
     if (res.canceled) return;
     setStatus(t("calendar.uploading"));
     try {
-      for (const a of res.assets) await api.upload({ uri: a.uri, mimeType: a.mimeType, fileName: a.fileName, file: a.file, takenAt: exifDate(a.exif?.DateTimeOriginal) });
+      for (const a of res.assets)
+        await api.upload({
+          uri: a.uri,
+          mimeType: a.mimeType,
+          fileName: a.fileName,
+          file: a.file,
+          takenAt: exifDate(a.exif?.DateTimeOriginal),
+        });
       await load(api, ym);
       setStatus(t("calendar.uploaded", { count: res.assets.length }));
     } catch {
@@ -76,7 +94,10 @@ export default function CalendarScreen() {
     }
   }
 
-  const go = (d: number) => { setData(null); setYm(shiftMonth(ym, d)); };
+  const go = (d: number) => {
+    setData(null);
+    setYm(shiftMonth(ym, d));
+  };
   const rows = Array.from({ length: grid.length / 7 }, (_, r) => grid.slice(r * 7, r * 7 + 7));
   const empty = data && Object.keys(data.days).length === 0 && Object.keys(data.notes ?? {}).length === 0;
 
@@ -84,12 +105,20 @@ export default function CalendarScreen() {
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
       <ScrollView contentContainerStyle={{ width: Math.min(width, 720), alignSelf: "center", paddingBottom: 32 }}>
         <View style={s.head}>
-          <Pressable onPress={() => go(-1)} hitSlop={12} style={s.nav}><Text style={{ color: c.ink, fontSize: 22 }}>‹</Text></Pressable>
+          <Pressable onPress={() => go(-1)} hitSlop={12} style={s.nav}>
+            <Text style={{ color: c.ink, fontSize: 22 }}>‹</Text>
+          </Pressable>
           <Text style={[s.title, { color: c.ink }]}>{title}</Text>
-          <Pressable onPress={() => go(1)} hitSlop={12} style={s.nav}><Text style={{ color: c.ink, fontSize: 22 }}>›</Text></Pressable>
+          <Pressable onPress={() => go(1)} hitSlop={12} style={s.nav}>
+            <Text style={{ color: c.ink, fontSize: 22 }}>›</Text>
+          </Pressable>
         </View>
         <View style={s.row}>
-          {weekdays.map((w, i) => <Text key={i} style={[s.wd, { width: cell, color: c.muted }]}>{w}</Text>)}
+          {weekdays.map((w, i) => (
+            <Text key={i} style={[s.wd, { width: cell, color: c.muted }]}>
+              {w}
+            </Text>
+          ))}
         </View>
         {rows.map((row, r) => (
           <View key={r} style={s.row}>
@@ -97,9 +126,19 @@ export default function CalendarScreen() {
               const ids = d ? data?.days[d] : undefined;
               const note = d ? data?.notes?.[d] : undefined;
               return (
-                <Pressable key={i} disabled={!ids && !note} onPress={() => router.push({ pathname: "/day", params: { date: d!, ids: (ids ?? []).join(","), note: note ?? "" } })} style={{ width: cell, height: cell, padding: 2 }}>
+                <Pressable
+                  key={i}
+                  disabled={!ids && !note}
+                  onPress={() => router.push({ pathname: "/day", params: { date: d!, ids: (ids ?? []).join(","), note: note ?? "" } })}
+                  style={{ width: cell, height: cell, padding: 2 }}
+                >
                   {d && (
-                    <View style={[s.cell, { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids || note ? c.surface : "transparent" }]}>
+                    <View
+                      style={[
+                        s.cell,
+                        { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids || note ? c.surface : "transparent" },
+                      ]}
+                    >
                       {ids && api && <Image source={api.thumbSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" />}
                       <Text style={[s.num, { color: ids ? "#fff" : c.muted }]}>{+d.slice(8)}</Text>
                       {note && <View style={[s.noteDot, { backgroundColor: ids ? "#fff" : c.accent }]} />}
@@ -116,14 +155,26 @@ export default function CalendarScreen() {
         <Pressable
           disabled={!api}
           onPress={add}
-          style={({ pressed }) => [s.btn, { backgroundColor: c.accent, opacity: api ? 1 : 0.4, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+          style={({ pressed }) => [
+            s.btn,
+            { backgroundColor: c.accent, opacity: api ? 1 : 0.4, transform: [{ translateY: pressed ? 1 : 0 }] },
+          ]}
         >
           <Text style={{ color: c.onAccent, fontWeight: "600" }}>{t("calendar.add")}</Text>
         </Pressable>
         {!empty && data && (
           <View style={s.secondary}>
-            {([["calendar.video", true], ["calendar.share", false]] as const).map(([k, v]) => (
-              <Pressable key={k} onPress={() => shareMonth(v)} style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}>
+            {(
+              [
+                ["calendar.video", true],
+                ["calendar.share", false],
+              ] as const
+            ).map(([k, v]) => (
+              <Pressable
+                key={k}
+                onPress={() => shareMonth(v)}
+                style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+              >
                 <Text style={{ color: c.accent, fontWeight: "600" }}>{t(k)}</Text>
               </Pressable>
             ))}
@@ -143,7 +194,16 @@ const s = StyleSheet.create({
   wd: { textAlign: "center", fontSize: 12, paddingBottom: 6 },
   cell: { flex: 1, borderRadius: 12, borderWidth: 1.5, overflow: "hidden", padding: 5 },
   num: { fontSize: 12, fontVariant: ["tabular-nums"], textShadowColor: "rgba(0,0,0,0.45)", textShadowRadius: 3 },
-  count: { position: "absolute", right: 5, bottom: 3, color: "#fff", fontSize: 10, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 3 },
+  count: {
+    position: "absolute",
+    right: 5,
+    bottom: 3,
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "600",
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowRadius: 3,
+  },
   noteDot: { position: "absolute", left: 6, bottom: 6, width: 6, height: 6, borderRadius: 3 },
   secondary: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
   ghost: { flex: 1, borderWidth: 1, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },

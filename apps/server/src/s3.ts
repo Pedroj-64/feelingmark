@@ -5,7 +5,12 @@ export type S3Config = { endpoint: string; bucket: string; accessKeyId: string; 
 
 /** Cualquier S3-compatible: Cloudflare R2, Backblaze B2, MinIO, AWS. Path-style para máxima compatibilidad. */
 export function s3StorageAdapter(cfg: S3Config): StorageAdapter {
-  const client = new AwsClient({ accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, service: "s3", region: cfg.region ?? "auto" });
+  const client = new AwsClient({
+    accessKeyId: cfg.accessKeyId,
+    secretAccessKey: cfg.secretAccessKey,
+    service: "s3",
+    region: cfg.region ?? "auto",
+  });
   const url = (key: string) => `${cfg.endpoint.replace(/\/+$/, "")}/${cfg.bucket}/${key.split("/").map(encodeURIComponent).join("/")}`;
   return {
     async put(key, data) {
