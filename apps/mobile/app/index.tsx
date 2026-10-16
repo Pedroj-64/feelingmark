@@ -84,7 +84,7 @@ export default function CalendarScreen() {
                 <Pressable key={i} disabled={!ids} onPress={() => router.push({ pathname: "/day", params: { date: d, ids: ids!.join(",") } })} style={{ width: cell, height: cell, padding: 2 }}>
                   {d && (
                     <View style={[s.cell, { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids ? c.surface : "transparent" }]}>
-                      {ids && api && <Image source={api.fileSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" />}
+                      {ids && api && <Image source={api.thumbSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" />}
                       <Text style={[s.num, { color: ids ? "#fff" : c.muted }]}>{+d.slice(8)}</Text>
                       {ids && ids.length > 1 && <Text style={s.count}>{ids.length}</Text>}
                     </View>

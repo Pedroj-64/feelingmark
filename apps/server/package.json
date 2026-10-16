@@ -10,7 +10,8 @@
   "dependencies": {
     "@hono/node-server": "^2.1.5",
     "exifr": "^7.1.3",
-    "hono": "^4.13.13"
+    "hono": "^4.13.13",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

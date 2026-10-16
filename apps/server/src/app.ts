@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { cors } from "hono/cors";
 import exifr from "exifr";
+import sharp from "sharp";
 import type { Db } from "./db.ts";
 import type { StorageAdapter } from "./storage.ts";
 
@@ -56,6 +57,29 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
       return c.body((await storage.get(String(row.key))) as Uint8Array<ArrayBuffer>, 200, { "content-type": String(row.mime), "cache-control": "private, max-age=31536000, immutable" });
     } catch {
       return c.json({ error: "storage unavailable" }, 503); // p. ej. disco extraíble desconectado
+    }
+  });
+
+  // Miniatura 400x400 generada al primer uso y guardada junto a las fotos.
+  app.get("/photos/:id/thumb", async (c) => {
+    const row = db.prepare("SELECT key, hash, mime FROM photos WHERE id = ?").get(Number(c.req.param("id")));
+    if (!row) return c.json({ error: "not found" }, 404);
+    const headers = { "cache-control": "private, max-age=31536000, immutable" };
+    const tkey = `thumbs/${row.hash}.webp`;
+    try {
+      const cached = await storage.get(tkey).catch(() => null);
+      if (cached) return c.body(cached as Uint8Array<ArrayBuffer>, 200, { ...headers, "content-type": "image/webp" });
+      const original = await storage.get(String(row.key));
+      try {
+        const thumb = new Uint8Array(await sharp(original).rotate().resize(400, 400, { fit: "cover" }).webp({ quality: 78 }).toBuffer());
+        await storage.put(tkey, thumb);
+        return c.body(thumb as Uint8Array<ArrayBuffer>, 200, { ...headers, "content-type": "image/webp" });
+      } catch {
+        // formato que sharp no decodifica (p. ej. HEIC): se sirve el original
+        return c.body(original as Uint8Array<ArrayBuffer>, 200, { ...headers, "content-type": String(row.mime) });
+      }
+    } catch {
+      return c.json({ error: "storage unavailable" }, 503);
     }
   });
 

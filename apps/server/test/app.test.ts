@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import sharp from "sharp";
 import { createApp } from "../src/app.ts";
 import { openDb } from "../src/db.ts";
 import type { StorageAdapter } from "../src/storage.ts";
@@ -62,4 +63,14 @@ test("disco desconectado devuelve 503, no revienta", async () => {
 test("responde el preflight CORS sin token", async () => {
   const r = await app.request("/photos", { method: "OPTIONS", headers: { origin: "https://x.dev", "access-control-request-method": "POST", "access-control-request-headers": "authorization" } });
   assert.equal(r.status, 204);
+});
+
+test("miniatura webp 400px, cacheada en el almacenamiento", async () => {
+  const png = new Uint8Array(await sharp({ create: { width: 800, height: 600, channels: 3, background: "#c4573a" } }).png().toBuffer());
+  const { id } = await (await upload(png, { takenAt: "2023-01-05T00:00:00Z" })).json();
+  const r = await app.request(`/photos/${id}/thumb`, { headers: auth });
+  assert.equal(r.headers.get("content-type"), "image/webp");
+  const meta = await sharp(Buffer.from(await r.arrayBuffer())).metadata();
+  assert.deepEqual([meta.width, meta.height], [400, 400]);
+  assert.ok([...mem.keys()].some((k) => k.startsWith("thumbs/")));
 });
