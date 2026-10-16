@@ -7,6 +7,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api, type MonthData } from "../../src/api";
 import { monthGrid, shiftMonth } from "../../src/calendar";
+import { drain, enqueue } from "../../src/queue";
+import { queueStore } from "../../src/queue-store";
 import { loadConn } from "../../src/settings";
 import { useTheme } from "../../src/theme";
 
@@ -60,25 +62,37 @@ export default function CalendarScreen() {
     [i18n.language],
   );
 
+  // Sube lo pendiente de la cola (también lo que quedó de una sesión anterior).
+  const flush = useCallback(
+    async (a: Api, month: string) => {
+      const r = await drain(
+        queueStore,
+        (p) => a.upload(p),
+        (left) => setStatus(t("calendar.uploadingLeft", { count: left })),
+      );
+      if (r.done > 0) await load(a, month);
+      if (r.left > 0) setStatus(t("calendar.pending", { count: r.left }));
+      else if (r.dropped > 0) setStatus(t("calendar.dropped", { count: r.dropped }));
+      else if (r.done > 0) setStatus(t("calendar.uploaded", { count: r.done }));
+    },
+    [load, t],
+  );
+
   async function add() {
     if (!api) return;
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, exif: true });
     if (res.canceled) return;
-    setStatus(t("calendar.uploading"));
-    try {
-      for (const a of res.assets)
-        await api.upload({
-          uri: a.uri,
-          mimeType: a.mimeType,
-          fileName: a.fileName,
-          file: a.file,
-          takenAt: exifDate(a.exif?.DateTimeOriginal),
-        });
-      await load(api, ym);
-      setStatus(t("calendar.uploaded", { count: res.assets.length }));
-    } catch (e) {
-      setStatus(`${t("common.error")} (${e instanceof Error ? e.message : String(e)})`);
-    }
+    await enqueue(
+      queueStore,
+      res.assets.map((a) => ({
+        uri: a.uri,
+        mimeType: a.mimeType,
+        fileName: a.fileName,
+        file: a.file,
+        takenAt: exifDate(a.exif?.DateTimeOriginal),
+      })),
+    );
+    await flush(api, ym);
   }
 
   async function shareMonth(video: boolean) {

@@ -3,6 +3,11 @@ import type en from "./en.ts";
 const es: typeof en = {
   tabs: { calendar: "Calendario", settings: "Ajustes" },
   calendar: {
+    uploadingLeft: "Subiendo… quedan {{count}}",
+    pending_one: "{{count}} foto pendiente, se reintentará",
+    pending_other: "{{count}} fotos pendientes, se reintentará",
+    dropped_one: "No se pudo subir {{count}} foto",
+    dropped_other: "No se pudieron subir {{count}} fotos",
     video: "Resumen en video",
     share: "Compartir mes",
     linkCopied: "Enlace copiado",

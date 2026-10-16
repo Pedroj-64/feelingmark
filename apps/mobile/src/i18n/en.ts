@@ -1,6 +1,11 @@
 export default {
   tabs: { calendar: "Calendar", settings: "Settings" },
   calendar: {
+    uploadingLeft: "Uploading… {{count}} left",
+    pending_one: "{{count}} photo pending, will retry",
+    pending_other: "{{count}} photos pending, will retry",
+    dropped_one: "{{count}} photo could not be uploaded",
+    dropped_other: "{{count}} photos could not be uploaded",
     video: "Video recap",
     share: "Share month",
     linkCopied: "Link copied",
