@@ -1,6 +1,11 @@
 <p align="right"><a href="README.md">English</a> · <b>Español</b></p>
 
-# Feelingmark
+<div align="center">
+  <img src="assets/brand/logo-animated.svg" alt="Feelingmark logo" width="128" height="128">
+  <h1>Feelingmark</h1>
+  <p><b>Un álbum-calendario de fotos y recuerdos que tú alojas.</b></p>
+  <img src="docs/media/demo-es.gif" alt="Recorrido de Feelingmark: calendario, vista de día y añadir fotos" width="300">
+</div>
 
 **Un álbum-calendario de fotos y recuerdos que tú alojas.** Pones tu almacenamiento; Feelingmark pone el orden: un calendario, un día a la vez.
 

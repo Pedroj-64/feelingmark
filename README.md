@@ -1,6 +1,11 @@
 <p align="right"><b>English</b> · <a href="README.es.md">Español</a></p>
 
-# Feelingmark
+<div align="center">
+  <img src="assets/brand/logo-animated.svg" alt="Feelingmark logo" width="128" height="128">
+  <h1>Feelingmark</h1>
+  <p><b>A self-hosted photo calendar and memory album.</b></p>
+  <img src="docs/media/demo-en.gif" alt="Feelingmark walkthrough: calendar, day view and adding photos" width="300">
+</div>
 
 **A self-hosted photo calendar and memory album.** Bring your own storage; Feelingmark brings the order: one calendar, one day at a time.
 
