@@ -3,7 +3,7 @@
 # (en CI corre gitleaks; este hook es una red de seguridad ligera sin dependencias).
 files=$(git diff --cached --name-only --diff-filter=ACM)
 [ -z "$files" ] && exit 0
-if echo "$files" | grep -Eq '(^|/)(\.env(\..*)?|key\.properties|.*-key\.properties|.*\.jks|.*\.keystore)$' && echo "$files" | grep -Evq '\.env\.example$'; then
+if echo "$files" | grep -v '\.env\.example$' | grep -Eq '(^|/)(\.env(\..*)?|\.dev\.vars|key\.properties|.*-key\.properties|.*\.jks|.*\.keystore|feelingmark-google\.json|client_secret.*\.json)$'; then
   echo "pre-commit: archivo secreto en el commit / secret file staged" >&2; exit 1
 fi
 if git diff --cached -U0 -- $files | grep -Eq '^\+.*(gh[pousr]_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(storePassword|keyPassword)=[^[:space:]]+)'; then

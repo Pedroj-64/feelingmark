@@ -24,7 +24,7 @@ Nace como alternativa abierta para quienes usaban apps como Dots Memories y no q
 - Modo claro/oscuro, español e inglés (se aceptan más idiomas).
 - Almacenamiento en disco local o en cualquier servicio compatible con S3 (Cloudflare R2, Backblaze B2, MinIO).
 
-Despliegue en Cloudflare Workers + D1 + R2 con un comando ([guía](docs/cloudflare.md)). Planeado: Google Drive (experimental), emparejar con QR. Guías: [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Hoja de ruta: [`docs/PLAN.md`](docs/PLAN.md).
+Despliegue en Cloudflare Workers + D1 + R2 con un comando ([guía](docs/cloudflare.md)). Almacenamiento experimental en Google Drive ([guía](docs/google-drive.md)). Guías: [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Hoja de ruta: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Inicio rápido (Docker)
 

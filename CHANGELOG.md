@@ -13,7 +13,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Notas de texto por día, resumen en video del mes (ffmpeg local, sin claves) y enlaces públicos de solo lectura para compartir un mes.
 - El núcleo del servidor es asíncrono y no depende de APIs de Node (corre en Node y en Workers).
 - Servidor Hono con SQLite: subida de fotos, fecha desde EXIF, duplicados por hash, calendario por mes, mover foto de día, miniaturas webp.
-- Almacenamiento intercambiable: disco local y S3-compatible (R2, B2, MinIO).
+- Almacenamiento intercambiable: disco local, S3-compatible (R2, B2, MinIO) y Google Drive (experimental, solo el scope `drive.file`).
 - Cliente Expo (móvil y web): calendario, vista de día, subida desde la galería, ajustes de conexión, es/en, modo oscuro.
 - Dockerfile, docker-compose, CI, README en inglés y español.
 - Icono de la app, logo animado y demostración en GIF.

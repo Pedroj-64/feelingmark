@@ -6,7 +6,7 @@
 |---|---|---|
 | `local` (default) | `STORAGE_PATH=/mnt/disk/photos` | Any disk, including removable. |
 | `s3` | `STORAGE_DRIVER=s3` + `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` | Cloudflare R2 (generous free tier, no egress fees), Backblaze B2, MinIO, AWS. |
-| Google Drive | not available yet | Planned, experimental. |
+| `gdrive` (experimental) | `STORAGE_DRIVER=gdrive` + Google OAuth client | Your own Drive, `drive.file` scope only. See [google-drive.md](google-drive.md). |
 
 Cloudflare R2 example: create a bucket and an API token with *Object Read & Write*; endpoint is `https://<account-id>.r2.cloudflarestorage.com`, region `auto`.
 
@@ -16,6 +16,6 @@ Cloudflare R2 example: create a bucket and an API token with *Object Read & Writ
 |---|---|---|
 | `local` (por defecto) | `STORAGE_PATH=/mnt/disco/fotos` | Cualquier disco, también extraíble. |
 | `s3` | `STORAGE_DRIVER=s3` + `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` | Cloudflare R2 (capa gratis generosa, sin cobro de salida), Backblaze B2, MinIO, AWS. |
-| Google Drive | aún no disponible | Planeado, experimental. |
+| `gdrive` (experimental) | `STORAGE_DRIVER=gdrive` + cliente OAuth de Google | Tu propio Drive, solo el scope `drive.file`. Ver [google-drive.md](google-drive.md). |
 
 Ejemplo con R2: crea un bucket y un token de API con *Object Read & Write*; el endpoint es `https://<id-de-cuenta>.r2.cloudflarestorage.com` y la región `auto`.
