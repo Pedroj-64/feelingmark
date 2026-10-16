@@ -58,3 +58,8 @@ test("disco desconectado devuelve 503, no revienta", async () => {
   mem.clear();
   assert.equal((await app.request("/photos/1/file", { headers: auth })).status, 503);
 });
+
+test("responde el preflight CORS sin token", async () => {
+  const r = await app.request("/photos", { method: "OPTIONS", headers: { origin: "https://x.dev", "access-control-request-method": "POST", "access-control-request-headers": "authorization" } });
+  assert.equal(r.status, 204);
+});

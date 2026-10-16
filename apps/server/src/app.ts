@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
+import { cors } from "hono/cors";
 import exifr from "exifr";
 import type { Db } from "./db.ts";
 import type { StorageAdapter } from "./storage.ts";
@@ -20,6 +21,7 @@ async function takenAt(bytes: Uint8Array, given: unknown, lastModified: number):
 export function createApp(opts: { db: Db; storage: StorageAdapter; token: string }) {
   const { db, storage, token } = opts;
   const app = new Hono();
+  app.use("*", cors()); // el cliente web vive en otro origen; el acceso lo protege el token
   app.use("*", bearerAuth({ token, verifyToken: (t) => t.length === token.length && timingSafeEqual(Buffer.from(t), Buffer.from(token)) }));
 
   app.post("/photos", async (c) => {
