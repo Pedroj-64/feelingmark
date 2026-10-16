@@ -1,4 +1,4 @@
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useMemo, useState } from "react";
@@ -17,6 +17,7 @@ const exifDate = (v: unknown) => (typeof v === "string" ? v.replace(/^(\d{4}):(\
 export default function CalendarScreen() {
   const { t, i18n } = useTranslation();
   const c = useTheme();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const [ym, setYm] = useState(today.slice(0, 7));
   const [data, setData] = useState<MonthData | null>(null);
@@ -80,7 +81,7 @@ export default function CalendarScreen() {
             {row.map((d, i) => {
               const ids = d ? data?.days[d] : undefined;
               return (
-                <View key={i} style={{ width: cell, height: cell, padding: 2 }}>
+                <Pressable key={i} disabled={!ids} onPress={() => router.push({ pathname: "/day", params: { date: d, ids: ids!.join(",") } })} style={{ width: cell, height: cell, padding: 2 }}>
                   {d && (
                     <View style={[s.cell, { borderColor: d === today ? c.accent : "transparent", backgroundColor: ids ? c.surface : "transparent" }]}>
                       {ids && api && <Image source={api.fileSource(ids[0])} style={StyleSheet.absoluteFill} contentFit="cover" />}
@@ -88,7 +89,7 @@ export default function CalendarScreen() {
                       {ids && ids.length > 1 && <Text style={s.count}>{ids.length}</Text>}
                     </View>
                   )}
-                </View>
+                </Pressable>
               );
             })}
           </View>

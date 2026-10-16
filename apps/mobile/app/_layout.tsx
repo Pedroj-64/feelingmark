@@ -16,6 +16,7 @@ export default function Layout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: t("tabs.calendar") }} />
+      <Tabs.Screen name="day" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ title: t("tabs.settings") }} />
     </Tabs>
   );
