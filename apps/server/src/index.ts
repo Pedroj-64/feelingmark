@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createApp } from "./app.ts";
 import { openDb } from "./db.ts";
+import { s3StorageAdapter } from "./s3.ts";
 import { localStorageAdapter } from "./storage.ts";
 
 const dbPath = process.env.DATABASE_PATH ?? "./data/feelingmark.sqlite";
@@ -14,7 +15,16 @@ if (!token) {
   token = randomBytes(24).toString("hex");
   console.log(`AUTH_TOKEN no definido; token temporal / temporary token: ${token}`);
 }
-const app = createApp({ db: openDb(dbPath), storage: localStorageAdapter(process.env.STORAGE_PATH ?? "./data/photos"), token });
+function pickStorage() {
+  if (process.env.STORAGE_DRIVER !== "s3") return localStorageAdapter(process.env.STORAGE_PATH ?? "./data/photos");
+  const need = (k: string) => process.env[k] || (console.error(`Falta / missing ${k}`), process.exit(1));
+  return s3StorageAdapter({
+    endpoint: need("S3_ENDPOINT"), bucket: need("S3_BUCKET"),
+    accessKeyId: need("S3_ACCESS_KEY_ID"), secretAccessKey: need("S3_SECRET_ACCESS_KEY"), region: process.env.S3_REGION,
+  });
+}
+
+const app = createApp({ db: openDb(dbPath), storage: pickStorage(), token });
 // WEB_DIR: carpeta exportada con `expo export -p web`; el mismo servidor entrega la web.
 if (process.env.WEB_DIR) {
   app.use("/*", serveStatic({ root: process.env.WEB_DIR }));
