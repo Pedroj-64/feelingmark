@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="160" height="160">
+  <style>
+    .d{transform-box:fill-box;transform-origin:center;animation:pop 3.6s ease-in-out infinite;opacity:0}
+    .h{transform-box:fill-box;transform-origin:center;animation:beat 3.6s ease-in-out infinite}
+    @keyframes pop{0%,8%{opacity:0;transform:scale(.2)}22%,86%{opacity:.55;transform:scale(1)}100%{opacity:0;transform:scale(.2)}}
+    @keyframes beat{0%,45%{transform:scale(0)}58%{transform:scale(1.15)}66%{transform:scale(.96)}74%,100%{transform:scale(1)}}
+    @media (prefers-reduced-motion:reduce){.d,.h{animation:none;opacity:1}}
+  </style>
+  <rect width="1024" height="1024" rx="228" fill="#C4573A"/>
+  <circle cx="312" cy="312" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:000ms"/>
+  <circle cx="512" cy="312" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:100ms"/>
+  <circle cx="712" cy="312" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:200ms"/>
+  <circle cx="312" cy="512" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:300ms"/>
+  <circle cx="712" cy="512" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:500ms"/>
+  <circle cx="312" cy="712" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:600ms"/>
+  <circle cx="512" cy="712" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:700ms"/>
+  <circle cx="712" cy="712" r="56" fill="#F7F4EF" opacity="0.55" class="d" style="animation-delay:800ms"/>
+  <g transform="translate(512 512) scale(1.15) translate(-512 -492)"><path class="h" d="M512 596 C436 538 396 497 396 450 C396 413 424 389 457 389 C483 389 503 403 512 424 C521 403 541 389 567 389 C600 389 628 413 628 450 C628 497 588 538 512 596 Z" fill="#F7F4EF"/></g>
+</svg>
