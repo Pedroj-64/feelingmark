@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api } from "../src/api";
@@ -16,6 +16,23 @@ export default function Day() {
   const [api, setApi] = useState<Api | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteErr, setNoteErr] = useState(false);
+  // Autoguardado: 700 ms tras dejar de escribir, y al salir de la pantalla (onBlur no se dispara al volver atrás).
+  const saved = useRef(initialNote ?? "");
+  const latest = useRef(note);
+  latest.current = note;
+  const save = (n: string) => {
+    if (!api || n === saved.current) return;
+    saved.current = n;
+    api.saveNote(date, n).then(
+      () => setNoteErr(false),
+      () => ((saved.current = "\u0000"), setNoteErr(true)),
+    );
+  };
+  useEffect(() => {
+    const id = setTimeout(() => save(note), 700);
+    return () => clearTimeout(id);
+  }, [note, api]);
+  useEffect(() => () => save(latest.current), [api]);
   useEffect(() => void loadConn().then((conn) => conn && setApi(createApi(conn))), []);
 
   const photos = (ids ?? "").split(",").filter(Boolean).map(Number);
@@ -38,12 +55,7 @@ export default function Day() {
         <TextInput
           value={note}
           onChangeText={setNote}
-          onBlur={() =>
-            api?.saveNote(date, note).then(
-              () => setNoteErr(false),
-              () => setNoteErr(true),
-            )
-          }
+          onBlur={() => save(note)}
           placeholder={t("day.notePlaceholder")}
           placeholderTextColor={c.muted}
           multiline

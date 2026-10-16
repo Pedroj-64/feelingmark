@@ -20,7 +20,7 @@ module.exports = (config) =>
       )
       .replace(
         /(see https:\/\/reactnative\.dev\/docs\/signed-apk-android\.\s*)signingConfig signingConfigs\.debug/,
-        `$1signingConfig System.getenv("FEELINGMARK_KEYSTORE") ? signingConfigs.release : signingConfigs.debug`
+        `$1signingConfig System.getenv("FEELINGMARK_KEYSTORE") ? signingConfigs.release : signingConfigs.debug`,
       );
     return c;
   });
