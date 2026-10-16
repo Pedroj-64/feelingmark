@@ -2,6 +2,8 @@
   // Despliegue en Cloudflare: Worker + D1 + R2 + cliente web. Ver docs/cloudflare.md
   "name": "feelingmark",
   "main": "src/worker.ts",
+  "workers_dev": true,
+  "preview_urls": false,
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "../mobile/dist",
