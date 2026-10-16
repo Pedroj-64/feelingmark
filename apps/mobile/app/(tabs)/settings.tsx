@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { loadConn, saveConn } from "../../src/settings";
 import { useTheme } from "../../src/theme";

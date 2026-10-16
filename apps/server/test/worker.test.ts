@@ -39,6 +39,7 @@ test("Worker: auth, subida con miniatura del cliente, calendario y video no disp
   assert.equal(up.status, 201);
   const month = await (await worker.fetch(new Request("http://x/photos?month=2024-01", { headers: auth }), env)).json();
   assert.deepEqual(month.days["2024-01-05"], [1]);
+  assert.equal(month.video, false); // la app oculta el botón de video
   const thumb = await worker.fetch(new Request("http://x/photos/1/thumb", { headers: auth }), env);
   assert.deepEqual([...new Uint8Array(await thumb.arrayBuffer())], [1, 2, 3]);
   assert.equal((await worker.fetch(new Request("http://x/albums/2024-01/video", { headers: auth }), env)).status, 501);

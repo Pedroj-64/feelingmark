@@ -180,3 +180,7 @@ test("sin ffmpeg el video responde 501 con un mensaje claro", async () => {
     process.env.PATH = path;
   }
 });
+
+test("el mes informa si hay resumen en video disponible", async () => {
+  assert.equal((await (await app.request("/photos?month=2024-05", { headers: auth })).json()).video, true);
+});

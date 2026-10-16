@@ -1,8 +1,12 @@
+import { File as FsFile } from "expo-file-system";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { Platform } from "react-native";
 import type { Conn } from "./settings.ts";
 
-export type MonthData = { month: string; days: Record<string, number[]>; notes: Record<string, string> };
+/** Archivo local para FormData en nativo: el fetch de Expo no admite {uri,...}; pide un objeto con bytes(), name y type. */
+const nativePart = (uri: string, name: string, type: string) => ({ name, type, bytes: () => new FsFile(uri).bytes() }) as unknown as Blob;
+
+export type MonthData = { month: string; days: Record<string, number[]>; notes: Record<string, string>; video?: boolean };
 
 export function createApi({ url, token }: Conn) {
   const headers = { authorization: `Bearer ${token}` };
@@ -41,13 +45,13 @@ export function createApi({ url, token }: Conn) {
       const form = new FormData();
       const type = asset.mimeType ?? "image/jpeg";
       if (Platform.OS === "web") form.append("file", asset.file ?? (await (await fetch(asset.uri)).blob()), asset.fileName ?? "photo");
-      else form.append("file", { uri: asset.uri, name: asset.fileName ?? "photo.jpg", type } as unknown as Blob);
+      else form.append("file", nativePart(asset.uri, asset.fileName ?? "photo.jpg", type));
       // Miniatura hecha en el dispositivo: el servidor (p. ej. Cloudflare Workers) no siempre puede generarla. Si falla, se sube sin ella.
       try {
         const ctx = ImageManipulator.manipulate(asset.uri).resize({ width: 400 });
         const thumb = await (await ctx.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: 0.7 });
         if (Platform.OS === "web") form.append("thumb", await (await fetch(thumb.uri)).blob(), "thumb.jpg");
-        else form.append("thumb", { uri: thumb.uri, name: "thumb.jpg", type: "image/jpeg" } as unknown as Blob);
+        else form.append("thumb", nativePart(thumb.uri, "thumb.jpg", "image/jpeg"));
       } catch {
         /* sin miniatura */
       }

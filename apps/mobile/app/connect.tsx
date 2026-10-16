@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { saveConn } from "../src/settings";
 import { useTheme } from "../src/theme";

@@ -4,6 +4,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-16
+
+### Fixed
+- Android: subir fotos fallaba con "Unsupported FormDataPart implementation" (el fetch de Expo no admite `{uri}`); ahora funciona.
+- La interfaz respeta la barra de estado de Android.
+- El botón "Resumen en video" solo aparece si el servidor puede generarlo (no en Cloudflare).
+- El aviso de error muestra el motivo.
+
 ## [0.1.0] - 2026-10-16
 
 ### Added

@@ -86,7 +86,7 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     for (const r of rows) (days[String(r.taken_at).slice(0, 10)] ??= []).push(Number(r.id));
     const notes: Record<string, string> = {};
     for (const r of await db.all("SELECT date, note FROM days WHERE date LIKE ?", `${month}-%`)) notes[String(r.date)] = String(r.note);
-    return c.json({ month, days, notes });
+    return c.json({ month, days, notes, video: Boolean(opts.slideshow) });
   });
 
   // Nota de texto de un día; vacía = borrar.

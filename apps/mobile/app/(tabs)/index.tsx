@@ -2,7 +2,8 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useMemo, useState } from "react";
-import { Linking, Platform, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api, type MonthData } from "../../src/api";
 import { monthGrid, shiftMonth } from "../../src/calendar";
@@ -75,8 +76,8 @@ export default function CalendarScreen() {
         });
       await load(api, ym);
       setStatus(t("calendar.uploaded", { count: res.assets.length }));
-    } catch {
-      setStatus(t("common.error"));
+    } catch (e) {
+      setStatus(`${t("common.error")} (${e instanceof Error ? e.message : String(e)})`);
     }
   }
 
@@ -169,15 +170,17 @@ export default function CalendarScreen() {
                 ["calendar.video", true],
                 ["calendar.share", false],
               ] as const
-            ).map(([k, v]) => (
-              <Pressable
-                key={k}
-                onPress={() => shareMonth(v)}
-                style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-              >
-                <Text style={{ color: c.accent, fontWeight: "600" }}>{t(k)}</Text>
-              </Pressable>
-            ))}
+            )
+              .filter(([k]) => k !== "calendar.video" || data.video)
+              .map(([k, v]) => (
+                <Pressable
+                  key={k}
+                  onPress={() => shareMonth(v)}
+                  style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+                >
+                  <Text style={{ color: c.accent, fontWeight: "600" }}>{t(k)}</Text>
+                </Pressable>
+              ))}
           </View>
         )}
       </ScrollView>
