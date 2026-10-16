@@ -23,7 +23,9 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   const { db, storage, token } = opts;
   const app = new Hono();
   app.use("*", cors()); // el cliente web vive en otro origen; el acceso lo protege el token
-  app.use("*", bearerAuth({ token, verifyToken: (t) => t.length === token.length && timingSafeEqual(Buffer.from(t), Buffer.from(token)) }));
+  const auth = bearerAuth({ token, verifyToken: (t) => t.length === token.length && timingSafeEqual(Buffer.from(t), Buffer.from(token)) });
+  app.use("/photos", auth); // la web estática (si se sirve) queda fuera del token
+  app.use("/photos/*", auth);
 
   app.post("/photos", async (c) => {
     const form = await c.req.parseBody();
