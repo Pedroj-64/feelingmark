@@ -4,7 +4,9 @@ import { dirname } from "node:path";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createApp } from "./app.ts";
-import { openDb } from "./db.ts";
+import { openDb } from "./db-node.ts";
+import { thumbnail } from "./node-tools.ts";
+import { buildSlideshow } from "./video.ts";
 import { s3StorageAdapter } from "./s3.ts";
 import { localStorageAdapter } from "./storage.ts";
 
@@ -27,7 +29,7 @@ function pickStorage() {
   });
 }
 
-const app = createApp({ db: openDb(dbPath), storage: pickStorage(), token });
+const app = createApp({ db: await openDb(dbPath), storage: pickStorage(), token, thumbnail, slideshow: buildSlideshow });
 // WEB_DIR: carpeta exportada con `expo export -p web`; el mismo servidor entrega la web.
 if (process.env.WEB_DIR) {
   app.use("/*", serveStatic({ root: process.env.WEB_DIR }));

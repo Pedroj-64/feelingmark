@@ -3,7 +3,9 @@ import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import sharp from "sharp";
 import { createApp } from "../src/app.ts";
-import { openDb } from "../src/db.ts";
+import { openDb } from "../src/db-node.ts";
+import { thumbnail } from "../src/node-tools.ts";
+import { buildSlideshow } from "../src/video.ts";
 import type { StorageAdapter } from "../src/storage.ts";
 
 const mem = new Map<string, Uint8Array>();
@@ -15,7 +17,7 @@ const storage: StorageAdapter = {
     return v;
   },
 };
-const app = createApp({ db: openDb(":memory:"), storage, token: "secret" });
+const app = createApp({ db: await openDb(":memory:"), storage, token: "secret", thumbnail, slideshow: buildSlideshow });
 const auth = { authorization: "Bearer secret" };
 
 /** JPEG mínimo con EXIF DateTimeOriginal = 2021:03:04 05:06:07 */

@@ -1,18 +1,30 @@
-import { DatabaseSync } from "node:sqlite";
+/** Acceso a datos mínimo y asíncrono: lo implementan node:sqlite (db-node.ts) y Cloudflare D1 (d1.ts). */
+export type Row = Record<string, unknown>;
+export interface Db {
+  all(sql: string, ...params: unknown[]): Promise<Row[]>;
+  get(sql: string, ...params: unknown[]): Promise<Row | undefined>;
+  run(sql: string, ...params: unknown[]): Promise<{ changes: number; lastId: number }>;
+}
 
-export function openDb(file: string) {
-  const db = new DatabaseSync(file);
-  db.exec(`CREATE TABLE IF NOT EXISTS photos (
+// Una sentencia por entrada: D1 no admite varias en un mismo exec.
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS photos (
     id INTEGER PRIMARY KEY,
     key TEXT NOT NULL,
     hash TEXT NOT NULL UNIQUE,
     mime TEXT NOT NULL,
-    taken_at TEXT NOT NULL,   -- ISO 8601
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE INDEX IF NOT EXISTS photos_taken_at ON photos (taken_at);
-  CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, month TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
-  CREATE TABLE IF NOT EXISTS days (date TEXT PRIMARY KEY, note TEXT NOT NULL);`);
-  return db;
+    taken_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    thumb_mime TEXT
+  )`,
+  "CREATE INDEX IF NOT EXISTS photos_taken_at ON photos (taken_at)",
+  "CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, month TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS days (date TEXT PRIMARY KEY, note TEXT NOT NULL)",
+];
+// Bases creadas antes de v0.1.1 no tienen thumb_mime; el ALTER falla sin daño si ya existe.
+const UPGRADES = ["ALTER TABLE photos ADD COLUMN thumb_mime TEXT"];
+
+export async function migrate(db: Db) {
+  for (const sql of SCHEMA) await db.run(sql);
+  for (const sql of UPGRADES) await db.run(sql).catch(() => undefined);
 }
-export type Db = ReturnType<typeof openDb>;
