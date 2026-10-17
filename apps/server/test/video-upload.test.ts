@@ -112,3 +112,26 @@ test("un video sin ffmpeg ni portada responde 404 en la miniatura, no un 503", a
   const { id } = await (await bare.request("/photos", { method: "POST", body: f, headers: auth })).json();
   assert.equal((await bare.request(`/photos/${id}/thumb`, { headers: auth })).status, 404);
 });
+
+test("enlace firmado: reproduce con Range sin token, caduca y no se puede falsificar", { skip }, async () => {
+  const video = makeVideo("2023-09-01T10:00:00Z");
+  const { id } = await (await post(video, "video/mp4", "d.mp4")).json();
+  assert.equal((await app.request(`/photos/${id}/link`, { method: "POST" })).status, 401); // pedir el enlace exige token
+  assert.equal((await app.request("/photos/99999/link", { method: "POST", headers: auth })).status, 404);
+  const { path } = await (await app.request(`/photos/${id}/link`, { method: "POST", headers: auth })).json();
+  const ok = await app.request(path, { headers: { range: "bytes=0-9" } }); // sin Authorization
+  assert.equal(ok.status, 206);
+  assert.equal(ok.headers.get("content-range"), `bytes 0-9/${video.length}`);
+  const url = new URL(path, "http://x");
+  const sign = async (msg: string) => {
+    const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("t"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    return [...new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(msg)))]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  };
+  const past = Date.now() - 1000;
+  assert.equal((await app.request(`/v/${id}?exp=${past}&sig=${await sign(`${id}.${past}`)}`)).status, 403); // firma válida pero caducada
+  assert.equal((await app.request(`/v/${id + 1}?exp=${url.searchParams.get("exp")}&sig=${url.searchParams.get("sig")}`)).status, 403); // firma de otro archivo
+  assert.equal((await app.request(`/v/${id}?exp=${url.searchParams.get("exp")}&sig=${"0".repeat(64)}`)).status, 403);
+  assert.equal((await app.request(`/v/${id}`)).status, 403);
+});

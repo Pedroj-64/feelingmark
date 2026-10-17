@@ -6,6 +6,8 @@ export default {
     count_other: "{{count}} photos",
   },
   a11y: {
+    hasVideo: "includes a video",
+    videoOf: "Video {{index}} of {{total}}",
     prevMonth: "Previous month",
     nextMonth: "Next month",
     hasNote: "has a note",

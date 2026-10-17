@@ -6,6 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Added
 - Videos: se pueden subir e importar (mp4, mov, webm, 3gp); fecha desde los metadatos, portada generada con ffmpeg y reproducción con avance libre (Range) en el servidor.
+- Reproducción de videos en la app (enlaces firmados de 10 minutos, sin exponer el token); insignia ▶ en el calendario.
 - Importador de carpetas (`node src/import.ts <carpeta>`): simula por defecto, informa de dónde sale cada fecha y avisa si todo cae en un solo día; `--apply` guarda y es repetible.
 - Guía de uso personal con servidor privado e importación desde el teléfono con `adb`.
 

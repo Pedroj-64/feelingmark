@@ -51,10 +51,11 @@ export default function CalendarScreen() {
   );
 
   const cell = Math.min(width, 720) / 7;
-  const dayLabel = (d: string, photos: number, hasNote: boolean) =>
+  const dayLabel = (d: string, photos: number, hasNote: boolean, hasVideo: boolean) =>
     [
       new Date(`${d}T12:00:00`).toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long" }),
       photos > 0 ? t("albums.count", { count: photos }) : null,
+      hasVideo ? t("a11y.hasVideo") : null,
       hasNote ? t("a11y.hasNote") : null,
     ]
       .filter(Boolean)
@@ -176,8 +177,18 @@ export default function CalendarScreen() {
                   disabled={!ids && !note}
                   accessible={Boolean(ids || note)}
                   accessibilityRole={ids || note ? "button" : undefined}
-                  accessibilityLabel={dayLabel(d, ids?.length ?? 0, Boolean(note))}
-                  onPress={() => router.push({ pathname: "/day", params: { date: d, ids: (ids ?? []).join(","), note: note ?? "" } })}
+                  accessibilityLabel={dayLabel(d, ids?.length ?? 0, Boolean(note), Boolean(ids?.some((x) => data?.videos?.includes(x))))}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/day",
+                      params: {
+                        date: d,
+                        ids: (ids ?? []).join(","),
+                        videos: (ids ?? []).filter((x) => data?.videos?.includes(x)).join(","),
+                        note: note ?? "",
+                      },
+                    })
+                  }
                   style={{ width: cell, height: cell, padding: 2 }}
                 >
                   {d && (
@@ -198,6 +209,7 @@ export default function CalendarScreen() {
                       )}
                       <Text style={[s.num, { color: ids ? "#fff" : c.muted }]}>{+d.slice(8)}</Text>
                       {note && <View style={[s.noteDot, { backgroundColor: ids ? "#fff" : c.accent }]} />}
+                      {ids?.some((x) => data?.videos?.includes(x)) && <Text style={s.play}>▶</Text>}
                       {ids && ids.length > 1 && <Text style={s.count}>{ids.length}</Text>}
                     </View>
                   )}
@@ -259,6 +271,7 @@ const s = StyleSheet.create({
   wd: { textAlign: "center", fontSize: 12, paddingBottom: 6 },
   cell: { flex: 1, borderRadius: 12, borderWidth: 1.5, overflow: "hidden", padding: 5 },
   num: { fontSize: 12, fontVariant: ["tabular-nums"], textShadowColor: "rgba(0,0,0,0.45)", textShadowRadius: 3 },
+  play: { position: "absolute", left: 6, bottom: 4, color: "#fff", fontSize: 11, textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 3 },
   count: {
     position: "absolute",
     right: 5,

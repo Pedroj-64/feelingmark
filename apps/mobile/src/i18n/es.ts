@@ -8,6 +8,8 @@ const es: typeof en = {
     count_other: "{{count}} fotos",
   },
   a11y: {
+    hasVideo: "incluye un video",
+    videoOf: "Video {{index}} de {{total}}",
     prevMonth: "Mes anterior",
     nextMonth: "Mes siguiente",
     hasNote: "tiene una nota",

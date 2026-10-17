@@ -38,7 +38,8 @@
           }
         }
       ],
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      "expo-video"
     ],
     "scheme": "feelingmark"
   }

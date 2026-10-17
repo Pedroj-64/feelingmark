@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
@@ -9,7 +10,12 @@ import { loadConn } from "../src/settings";
 import { useTheme } from "../src/theme";
 
 export default function Day() {
-  const { date, ids, note: initialNote } = useLocalSearchParams<{ date: string; ids: string; note?: string }>();
+  const {
+    date,
+    ids,
+    videos: videoIds,
+    note: initialNote,
+  } = useLocalSearchParams<{ date: string; ids: string; videos?: string; note?: string }>();
   const { t, i18n } = useTranslation();
   const c = useTheme();
   const router = useRouter();
@@ -37,6 +43,7 @@ export default function Day() {
   useEffect(() => void loadConn().then((conn) => conn && setApi(createApi(conn))), []);
 
   const photos = (ids ?? "").split(",").filter(Boolean).map(Number);
+  const videoSet = new Set((videoIds ?? "").split(",").filter(Boolean).map(Number));
   const rawTitle = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, {
     weekday: "long",
     day: "numeric",
@@ -77,13 +84,17 @@ export default function Day() {
           {api &&
             photos.map((id, i) => (
               <View key={id} style={{ gap: 8 }}>
-                <Image
-                  source={api.fileSource(id)}
-                  style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }}
-                  contentFit="cover"
-                  cachePolicy="disk"
-                  accessibilityLabel={t("a11y.photoOf", { index: i + 1, total: photos.length })}
-                />
+                {videoSet.has(id) ? (
+                  <VideoItem api={api} id={id} width={w} label={t("a11y.videoOf", { index: i + 1, total: photos.length })} />
+                ) : (
+                  <Image
+                    source={api.fileSource(id)}
+                    style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }}
+                    contentFit="cover"
+                    cachePolicy="disk"
+                    accessibilityLabel={t("a11y.photoOf", { index: i + 1, total: photos.length })}
+                  />
+                )}
                 <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
               </View>
             ))}
@@ -101,6 +112,22 @@ const s = StyleSheet.create({
   back: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   title: { fontSize: 26, fontWeight: "600", letterSpacing: -0.5, marginVertical: 12 },
 });
+
+/** Reproductor de un video del día. La URL firmada se pide al montar; caduca a los 10 min (basta para ver el clip). */
+function VideoItem({ api, id, width, label }: { api: Api; id: number; width: number; label: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => void api.videoUrl(id).then(setSrc, () => setSrc(null)), [api, id]);
+  const player = useVideoPlayer(src, () => {});
+  return (
+    <VideoView
+      player={player}
+      nativeControls
+      contentFit="contain"
+      accessibilityLabel={label}
+      style={{ width, height: width * 0.75, borderRadius: 16, backgroundColor: "#000" }}
+    />
+  );
+}
 
 function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promise<void> }) {
   const { t } = useTranslation();

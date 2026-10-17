@@ -8,6 +8,11 @@ import type { StorageAdapter } from "./storage.ts";
 const MONTH = /^\d{4}-\d{2}$/;
 const END = "￿"; // cota superior para comparar prefijos de fecha ISO
 
+const hmac = async (key: string, msg: string) => {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return hex(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(msg)));
+};
+const LINK_TTL_MS = 10 * 60_000;
 const randomId = () => hex(crypto.getRandomValues(new Uint8Array(12)));
 function safeEqual(a: string, b: string) {
   const x = new TextEncoder().encode(a);
@@ -188,6 +193,21 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     return { data, mime: "video/mp4" };
   };
 
+  // Enlace firmado y de corta duración para reproducir un archivo: <video> no puede enviar la cabecera Authorization.
+  // Vale solo para ese id y caduca; no revela el token (la firma es un HMAC con él).
+  app.post("/photos/:id/link", async (c) => {
+    const id = Number(c.req.param("id"));
+    if (!(await db.get("SELECT 1 AS x FROM photos WHERE id = ?", id))) return c.json({ error: "not found" }, 404);
+    const exp = Date.now() + LINK_TTL_MS;
+    return c.json({ path: `/v/${id}?exp=${exp}&sig=${await hmac(token, `${id}.${exp}`)}`, expiresAt: exp });
+  });
+  app.get("/v/:id", async (c) => {
+    const id = Number(c.req.param("id"));
+    const exp = Number(c.req.query("exp"));
+    if (!(exp > Date.now()) || !safeEqual(c.req.query("sig") ?? "", await hmac(token, `${id}.${exp}`)))
+      return c.json({ error: "link expired or invalid" }, 403);
+    return guard(() => fileOf(id))(c);
+  });
   app.get(
     "/photos/:id/file",
     guard((c) => fileOf(Number(c.req.param("id")))),

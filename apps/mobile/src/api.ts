@@ -8,7 +8,13 @@ const nativePart = (uri: string, name: string, type: string) => ({ name, type, b
 
 export type Album = { month: string; count: number; cover: number };
 
-export type MonthData = { month: string; days: Record<string, number[]>; notes: Record<string, string>; video?: boolean };
+export type MonthData = {
+  month: string;
+  days: Record<string, number[]>;
+  notes: Record<string, string>;
+  videos?: number[];
+  video?: boolean;
+};
 
 export function createApi({ url, token }: Conn) {
   const headers = { authorization: `Bearer ${token}` };
@@ -31,6 +37,12 @@ export function createApi({ url, token }: Conn) {
       const r = await fetch(`${url}/albums`, { headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return (await r.json()).albums;
+    },
+    /** URL firmada y de corta duración para reproducir un video (el reproductor no puede mandar cabeceras). */
+    async videoUrl(id: number): Promise<string> {
+      const r = await fetch(`${url}/photos/${id}/link`, { method: "POST", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return `${url}${(await r.json()).path}`;
     },
     async saveNote(date: string, note: string) {
       const r = await fetch(`${url}/days/${date}`, {
