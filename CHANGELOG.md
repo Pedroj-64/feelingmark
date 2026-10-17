@@ -17,6 +17,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Álbumes agrupados por año; iconos en las pestañas; esqueletos de carga; fuente Geist en el cuerpo.
 
 ### Changed
+- El QR de emparejamiento es ahora un enlace web (`/pair/go`) que lee cualquier cámara y abre la app; margen del QR de /pair de 1 a 4 módulos.
 - El release publica un APK por arquitectura (arm64-v8a, armeabi-v7a, x86_64; ~40 MB cada uno) más uno universal (~122 MB), y un `SHA256SUMS.txt`. La guía de instalación explica cómo instalar sin tienda.
 
 ## [0.3.0] - 2026-10-16

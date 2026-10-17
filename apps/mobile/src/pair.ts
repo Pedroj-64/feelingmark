@@ -2,6 +2,9 @@
 export type Pairing = { url: string; code?: string; token?: string };
 
 export function parsePairing(raw: string): Pairing | null {
+  // QR actual: enlace web <servidor>/pair/go?c=<código> (lo lee cualquier cámara); se admite también dentro de la app.
+  const web = /^(https?:\/\/[^\s/?#]+)\/pair\/go\?c=([0-9a-f]{16,64})$/i.exec(raw.trim());
+  if (web) return { url: web[1], code: web[2] };
   const m = /^feelingmark:\/\/connect\?(.+)$/.exec(raw.trim());
   if (!m) return null;
   const p: Record<string, string> = {};

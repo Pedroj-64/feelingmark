@@ -32,3 +32,12 @@ test("redeem devuelve el token y falla si el servidor rechaza el código", async
   await assert.rejects(redeem("http://s", "c1", (async () => new Response("{}", { status: 404 })) as typeof fetch));
   await assert.rejects(redeem("http://s", "c1", (async () => new Response("{}")) as typeof fetch));
 });
+
+test("lee el QR actual: enlace web /pair/go", () => {
+  assert.deepEqual(parsePairing("http://192.168.1.6:8787/pair/go?c=0123456789abcdef0123456789abcdef"), {
+    url: "http://192.168.1.6:8787",
+    code: "0123456789abcdef0123456789abcdef",
+  });
+  assert.equal(parsePairing("http://192.168.1.6:8787/otra-cosa?c=0123456789abcdef"), null);
+  assert.equal(parsePairing("https://evil.com/pair/go?c=zz"), null);
+});

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { Hono } from "hono";
-import { mountPairing } from "../src/pair.ts";
+import { mountPairing, pairingWebLink } from "../src/pair.ts";
 
 const setup = () => {
   const app = new Hono();
@@ -69,4 +69,32 @@ test("tras 10 intentos fallidos responde 429 y vuelve a la normalidad al minuto"
   } finally {
     Date.now = now;
   }
+});
+
+test("el QR es un enlace web que abre la app sin gastar el código", async () => {
+  const { app, pairing, redeem } = setup();
+  const code = pairing.newCode();
+  assert.equal(pairingWebLink("http://192.168.1.6:8787/", code), `http://192.168.1.6:8787/pair/go?c=${code}`);
+  const r = await app.request(`http://192.168.1.6:8787/pair/go?c=${code}`);
+  assert.equal(r.status, 200);
+  const html = await r.text();
+  assert.ok(
+    html.includes(`feelingmark://connect?u=http%3A%2F%2F192.168.1.6%3A8787&amp;c=${code}`) ||
+      html.includes(`feelingmark://connect?u=http%3A%2F%2F192.168.1.6%3A8787&#38;c=${code}`),
+  );
+  assert.ok(!html.includes("secret-token"));
+  assert.equal((await redeem(code)).status, 200); // abrir la página no lo gastó
+  assert.equal((await app.request(`http://x/pair/go?c=${code}`)).status, 410); // ya canjeado
+  assert.equal((await app.request("http://x/pair/go?c=inventado")).status, 410);
+});
+
+test("el QR de /pair apunta a /pair/go, nunca al token", async () => {
+  const { app } = setup();
+  const r = await app.request("http://192.168.1.10:8787/pair", {
+    method: "POST",
+    body: new URLSearchParams({ token: "secret-token" }),
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+  });
+  assert.equal(r.status, 200);
+  assert.ok(!(await r.text()).includes("secret-token"));
 });

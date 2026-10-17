@@ -11,6 +11,12 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 export const pairingLink = (url: string, code: string) => `feelingmark://connect?u=${encodeURIComponent(url)}&c=${code}`;
 
 /**
+ * Lo que lleva el QR: un enlace web normal, para que lo lea cualquier lector (la cámara del teléfono, Google Lens, la app).
+ * /pair/go abre la app con el enlace feelingmark://. Un QR con solo feelingmark:// muchas cámaras no lo reconocen.
+ */
+export const pairingWebLink = (url: string, code: string) => `${url.replace(/\/$/, "")}/pair/go?c=${code}`;
+
+/**
  * Emparejamiento del teléfono sin exponer el token: el QR trae un código que se canjea una vez y caduca a los 15 min.
  * /pair muestra un QR nuevo tras escribir el token, con la dirección por la que se abrió la página (sirve también en Docker).
  * ponytail: los códigos viven en memoria (se pierden al reiniciar) y el límite de intentos es global, no por IP
@@ -40,9 +46,31 @@ export function mountPairing(app: Hono, token: string) {
     return c.json({ error: "invalid or expired code" }, 404);
   });
 
+  // Página a la que lleva el QR: no gasta el código (eso lo hace /pair/redeem), solo abre la app con él.
+  app.get("/pair/go", (c) => {
+    const es = isEs(c.req.header("accept-language"));
+    const code = c.req.query("c") ?? "";
+    const exp = codes.get(code);
+    if (!exp || exp < Date.now())
+      return c.html(
+        page(
+          es,
+          `<h1>Feelingmark</h1><p class="e">${es ? "Este código ya se usó o caducó. Muestra un QR nuevo en tu servidor (/pair)." : "This code was already used or has expired. Show a new QR on your server (/pair)."}</p>`,
+        ),
+        410,
+      );
+    const link = esc(pairingLink(new URL(c.req.url).origin, code));
+    return c.html(
+      page(
+        es,
+        `<h1>${es ? "Abrir Feelingmark" : "Open Feelingmark"}</h1><p>${es ? "Toca el botón para conectar la app con tu servidor." : "Tap the button to connect the app to your server."}</p><a class="b" href="${link}">${es ? "Abrir en la app" : "Open in the app"}</a><p><small>${es ? "Si no pasa nada, instala la app desde la página de Releases de GitHub y vuelve a escanear." : "If nothing happens, install the app from the GitHub Releases page and scan again."}</small></p><script>location.href=${JSON.stringify(pairingLink(new URL(c.req.url).origin, code)).replace(/</g, "\\u003c")}</script>`,
+      ),
+    );
+  });
+
   const page = (es: boolean, body: string) =>
     `<!doctype html><html lang="${es ? "es" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Feelingmark</title>
-<style>body{margin:0;background:#F7F4EF;color:#1F1B16;font:16px system-ui,sans-serif}main{max-width:420px;margin:0 auto;padding:32px 16px}h1{font-weight:600;letter-spacing:-.4px}input,button{font:inherit;width:100%;box-sizing:border-box;min-height:48px;border-radius:14px;border:1px solid #756E66;padding:0 14px;margin-top:12px}button{background:#B65136;color:#fff;border:0;font-weight:600}svg{width:100%;height:auto;background:#fff;border-radius:16px}small,.e{color:#756E66}.e{color:#B65136}@media(prefers-color-scheme:dark){body{background:#16130F;color:#F2EDE4}input{background:#211D18;color:#F2EDE4}small{color:#A39B8F}.e{color:#E07A5C}}</style></head><body><main>${body}</main></body></html>`;
+<style>body{margin:0;background:#F7F4EF;color:#1F1B16;font:16px system-ui,sans-serif}main{max-width:420px;margin:0 auto;padding:32px 16px}h1{font-weight:600;letter-spacing:-.4px}input,button{font:inherit;width:100%;box-sizing:border-box;min-height:48px;border-radius:14px;border:1px solid #756E66;padding:0 14px;margin-top:12px}button,.b{background:#B65136;color:#fff;border:0;font-weight:600}.b{display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;min-height:48px;border-radius:14px;margin-top:12px}svg{width:100%;height:auto;background:#fff;border-radius:16px}small,.e{color:#756E66}.e{color:#B65136}@media(prefers-color-scheme:dark){body{background:#16130F;color:#F2EDE4}input{background:#211D18;color:#F2EDE4}small{color:#A39B8F}.e{color:#E07A5C}}</style></head><body><main>${body}</main></body></html>`;
   const form = (es: boolean, err = "") =>
     page(
       es,
@@ -64,7 +92,7 @@ export function mountPairing(app: Hono, token: string) {
       return c.html(form(es, `<p class="e">${es ? "Token incorrecto." : "Wrong token."}</p>`), 401);
     }
     const origin = new URL(c.req.url).origin;
-    const svg = await QRCode.toString(pairingLink(origin, newCode()), { type: "svg", margin: 1 });
+    const svg = await QRCode.toString(pairingWebLink(origin, newCode()), { type: "svg", margin: 4 }); // margen 4: lo que pide el estándar para leerse bien
     return c.html(
       page(
         es,

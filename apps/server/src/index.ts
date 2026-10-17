@@ -9,7 +9,7 @@ import { createApp } from "./app.ts";
 import { openDb } from "./db-node.ts";
 import { thumbnail, videoDate, videoPoster } from "./node-tools.ts";
 import { buildSlideshow } from "./video.ts";
-import { mountPairing, pairingLink } from "./pair.ts";
+import { mountPairing, pairingWebLink } from "./pair.ts";
 import { getRefreshToken, mountGoogleOAuth } from "./oauth-google.ts";
 import { googleCreds, pickStorage } from "./storage-env.ts";
 
@@ -61,7 +61,7 @@ const lan =
 const publicUrl = process.env.PUBLIC_URL || `http://${lan}:${process.env.PORT ?? 8787}`;
 const port = process.env.PORT ?? 8787;
 console.log(`\nEmparejar el teléfono / Pair your phone (${publicUrl}) — código de un solo uso, 15 min / one-time code, 15 min:`);
-qrcode.generate(pairingLink(publicUrl, pairing.newCode()), { small: true });
+qrcode.generate(pairingWebLink(publicUrl, pairing.newCode()), { small: true });
 console.log(`¿Otro QR más tarde? / Need another QR later? ${publicUrl.replace(/\/$/, "")}/pair`);
 // Dentro de Docker la IP detectada es la del contenedor: sin PUBLIC_URL este QR no conecta, pero /pair usa la dirección con la que lo abras.
 if (!process.env.PUBLIC_URL && existsSync("/.dockerenv"))
