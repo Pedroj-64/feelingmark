@@ -43,7 +43,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   const app = new Hono();
   app.use("*", cors()); // el cliente web puede vivir en otro origen; el acceso lo protege el token
   const auth = bearerAuth({ token, verifyToken: (t) => safeEqual(t, token) });
-  for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*", "/memories", "/search"]) app.use(p, auth); // la web estática queda fuera del token
+  for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*", "/memories", "/search", "/timeline", "/stats"])
+    app.use(p, auth); // la web estática queda fuera del token
 
   // Tope por subida (el archivo se carga entero en memoria): 413 sin leer el cuerpo si Content-Length ya lo supera.
   const limit = bodyLimit({ maxSize: opts.maxUploadBytes ?? DEFAULT_MAX_UPLOAD, onError: (c) => c.json({ error: "file too large" }, 413) });
@@ -85,6 +86,44 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     const notes: Record<string, string> = {};
     for (const r of await db.all("SELECT date, note FROM days WHERE date LIKE ?", `${month}-%`)) notes[String(r.date)] = String(r.note);
     return c.json({ month, days, notes, videos, video: Boolean(opts.slideshow) });
+  });
+
+  // Resumen de la biblioteca (para Ajustes): cuántas fotos y videos, notas y desde cuándo.
+  app.get("/stats", async (c) => {
+    const rows = await db.all("SELECT mime, COUNT(*) AS n FROM photos GROUP BY mime");
+    let photos = 0;
+    let videos = 0;
+    for (const r of rows) isVideo(String(r.mime)) ? (videos += Number(r.n)) : (photos += Number(r.n));
+    const range = await db.get("SELECT MIN(taken_at) AS first, MAX(taken_at) AS last FROM photos");
+    const notes = await db.get("SELECT COUNT(*) AS n FROM days");
+    return c.json({
+      photos,
+      videos,
+      notes: Number(notes?.n ?? 0),
+      first: range?.first ? String(range.first) : null,
+      last: range?.last ? String(range.last) : null,
+    });
+  });
+
+  // Línea de tiempo para la vista de galería: todo, lo más reciente primero, por páginas (?cursor=<taken_at>_<id>&limit=).
+  app.get("/timeline", async (c) => {
+    const limit = Math.min(200, Math.max(1, Number(c.req.query("limit")) || 90));
+    const m = /^(.+)_(\d+)$/.exec(c.req.query("cursor") ?? "");
+    const rows = m
+      ? await db.all(
+          "SELECT id, taken_at, mime FROM photos WHERE taken_at < ? OR (taken_at = ? AND id < ?) ORDER BY taken_at DESC, id DESC LIMIT ?",
+          m[1],
+          m[1],
+          Number(m[2]),
+          limit + 1,
+        )
+      : await db.all("SELECT id, taken_at, mime FROM photos ORDER BY taken_at DESC, id DESC LIMIT ?", limit + 1);
+    const page = rows.slice(0, limit);
+    const last = page[page.length - 1];
+    return c.json({
+      items: page.map((r) => ({ id: Number(r.id), takenAt: String(r.taken_at), video: isVideo(String(r.mime)) })),
+      next: rows.length > limit && last ? `${last.taken_at}_${last.id}` : null,
+    });
   });
 
   // Un álbum por cada mes con fotos (el más reciente primero): cuántas hay y cuál usar de portada.
