@@ -17,7 +17,7 @@
 
 Nace como alternativa abierta para quienes usaban apps como Dots Memories y no quieren que sus recuerdos queden atados a la suscripción de otro. La app móvil (Android/iOS) y el cliente web comparten el mismo código.
 
-> Estado: desarrollo temprano (pre-0.1). Lo esencial funciona; espera aristas por pulir.
+> Estado: v0.3 — usable a diario, con algunas aristas por pulir. Código abierto y autoalojado: tú levantas tu propio servidor y almacenamiento. Lo que sigue: [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Características
 
@@ -35,7 +35,7 @@ Nace como alternativa abierta para quienes usaban apps como Dots Memories y no q
 - Modo claro/oscuro, español e inglés (se aceptan más idiomas).
 - Almacenamiento en disco local o en cualquier servicio compatible con S3 (Cloudflare R2, Backblaze B2, MinIO).
 
-Despliegue en Cloudflare Workers + D1 + R2 con un comando ([guía](docs/cloudflare.md)). Almacenamiento experimental en Google Drive ([guía](docs/google-drive.md)). Guías: [`docs/personal-use.md`](docs/personal-use.md) (servidor privado + importar tu biblioteca), [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Hoja de ruta: [`docs/PLAN.md`](docs/PLAN.md).
+Despliegue en Cloudflare Workers + D1 + R2 con un comando ([guía](docs/cloudflare.md)). Almacenamiento experimental en Google Drive ([guía](docs/google-drive.md)). App Android: APK firmados en [Releases](https://github.com/Pedroj-64/feelingmark/releases), sin tienda ([cómo instalar](docs/install.md)). Usar el servidor fuera de casa: [`docs/exposing.md`](docs/exposing.md). Guías: [`docs/personal-use.md`](docs/personal-use.md) (servidor privado + importar tu biblioteca), [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Hoja de ruta: [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Inicio rápido (Docker)
 

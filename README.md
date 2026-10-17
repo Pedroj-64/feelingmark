@@ -17,7 +17,7 @@
 
 Built as an open alternative for people who liked apps like Dots Memories but don't want their memories locked into someone else's subscription. Mobile app (Android/iOS) and web client share the same code.
 
-> Status: early development (pre-0.1). The core works; expect rough edges.
+> Status: v0.3 — usable day to day; some rough edges remain. Open source and self-hosted: you run your own server and storage. What is planned next: [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Features
 
@@ -35,7 +35,7 @@ Built as an open alternative for people who liked apps like Dots Memories but do
 - Light/dark mode, English and Spanish (more languages welcome).
 - Storage on a local disk or any S3-compatible service (Cloudflare R2, Backblaze B2, MinIO).
 
-Deploy on Cloudflare Workers + D1 + R2 with one command ([guide](docs/cloudflare.md)). Experimental Google Drive storage ([guide](docs/google-drive.md)). Guides: [`docs/personal-use.md`](docs/personal-use.md) (private server + importing your library), [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Roadmap: [`docs/PLAN.md`](docs/PLAN.md).
+Deploy on Cloudflare Workers + D1 + R2 with one command ([guide](docs/cloudflare.md)). Experimental Google Drive storage ([guide](docs/google-drive.md)). Android app: signed APKs on [Releases](https://github.com/Pedroj-64/feelingmark/releases), no store needed ([how to install](docs/install.md#3-android-app)). Reach your server from outside home: [`docs/exposing.md`](docs/exposing.md). Guides: [`docs/personal-use.md`](docs/personal-use.md) (private server + importing your library), [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Roadmap: [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Quick start (Docker)
 

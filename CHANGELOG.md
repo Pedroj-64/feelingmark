@@ -4,6 +4,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+### Added
+- `/pair` y `/pair/redeem` limitan intentos fallidos (10 por minuto, responde 429).
+- La app avisa cuando un archivo borrado no se pudo quitar del almacenamiento.
+- Guía `docs/exposing.md`: Tailscale, Cloudflare Tunnel y Caddy para usar el servidor fuera de casa.
+
+### Changed
+- El release publica un APK por arquitectura (arm64-v8a, armeabi-v7a, x86_64; ~40 MB cada uno) más uno universal (~122 MB), y un `SHA256SUMS.txt`. La guía de instalación explica cómo instalar sin tienda.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added

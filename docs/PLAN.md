@@ -1,3 +1,5 @@
+> **Documento histórico** (plan inicial, anterior a v0.1). Lo vigente: [`roadmap.md`](roadmap.md), [`CHANGELOG`](../CHANGELOG.md) y los README. Cambios desde entonces: el QR ya no lleva el token sino un código de un solo uso (`/pair`), hay borrado y videos, y el proyecto es solo open source en GitHub (sin tiendas).
+
 # Plan: álbum-calendario open source (alternativa a Dots Memories)
 
 Nombre de trabajo: **Feelingmark** (cambiable; verificar disponibilidad en GitHub/npm antes de crear el repo).
