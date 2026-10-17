@@ -40,7 +40,24 @@
       ],
       "./plugins/withReleaseSigning",
       "expo-video",
-      ["expo-camera", { "cameraPermission": "Feelingmark usa la cámara solo para leer el QR de tu servidor. / Feelingmark uses the camera only to read your server's QR.", "recordAudioAndroid": false }]
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Feelingmark lee tus fotos y videos solo para subir los que elijas a tu servidor. / Feelingmark reads your photos and videos only to upload the ones you choose to your server.",
+          "granularPermissions": [
+            "photo",
+            "video"
+          ]
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Feelingmark usa la cámara solo para leer el QR de tu servidor. / Feelingmark uses the camera only to read your server's QR.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "feelingmark"
   }
