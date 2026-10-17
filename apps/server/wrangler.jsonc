@@ -8,7 +8,7 @@
   "assets": {
     "directory": "../mobile/dist",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*", "/s/*", "/v/*"]
+    "run_worker_first": ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/memories", "/search", "/shares/*", "/s/*", "/v/*"]
   },
   // D1 y R2 se crean solos en el primer `wrangler deploy` (aprovisionamiento automático).
   "d1_databases": [{ "binding": "DB", "database_name": "feelingmark" }],

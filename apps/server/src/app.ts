@@ -43,7 +43,7 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   const app = new Hono();
   app.use("*", cors()); // el cliente web puede vivir en otro origen; el acceso lo protege el token
   const auth = bearerAuth({ token, verifyToken: (t) => safeEqual(t, token) });
-  for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*"]) app.use(p, auth); // la web estática queda fuera del token
+  for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*", "/memories", "/search"]) app.use(p, auth); // la web estática queda fuera del token
 
   // Tope por subida (el archivo se carga entero en memoria): 413 sin leer el cuerpo si Content-Length ya lo supera.
   const limit = bodyLimit({ maxSize: opts.maxUploadBytes ?? DEFAULT_MAX_UPLOAD, onError: (c) => c.json({ error: "file too large" }, 413) });
@@ -93,6 +93,55 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
       "SELECT substr(taken_at, 1, 7) AS month, COUNT(*) AS count, MIN(id) AS cover FROM photos GROUP BY month ORDER BY month DESC",
     );
     return c.json({ albums: rows.map((r) => ({ month: String(r.month), count: Number(r.count), cover: Number(r.cover) })) });
+  });
+
+  // "Un día como hoy": lo que hay en ese mismo día y mes de años anteriores (?date=YYYY-MM-DD), el año más reciente primero.
+  app.get("/memories", async (c) => {
+    const date = c.req.query("date") ?? "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return c.json({ error: "date=YYYY-MM-DD required" }, 400);
+    const md = date.slice(5);
+    const rows = await db.all(
+      "SELECT id, taken_at, mime FROM photos WHERE substr(taken_at, 6, 5) = ? AND substr(taken_at, 1, 4) < ? ORDER BY taken_at DESC LIMIT 200",
+      md,
+      date.slice(0, 4),
+    );
+    const byYear = new Map<string, { date: string; ids: number[]; videos: number[]; note?: string }>();
+    for (const r of rows) {
+      const d = String(r.taken_at).slice(0, 10);
+      const m = byYear.get(d.slice(0, 4)) ?? { date: d, ids: [], videos: [] };
+      m.ids.push(Number(r.id));
+      if (isVideo(String(r.mime))) m.videos.push(Number(r.id));
+      byYear.set(d.slice(0, 4), m);
+    }
+    for (const r of await db.all(
+      "SELECT date, note FROM days WHERE substr(date, 6, 5) = ? AND substr(date, 1, 4) < ?",
+      md,
+      date.slice(0, 4),
+    )) {
+      const y = String(r.date).slice(0, 4);
+      byYear.set(y, { ...(byYear.get(y) ?? { date: String(r.date), ids: [], videos: [] }), note: String(r.note) });
+    }
+    return c.json({ memories: [...byYear.values()].sort((a, b) => b.date.localeCompare(a.date)) });
+  });
+
+  // Búsqueda en las notas de los días (?q=texto), lo más reciente primero. ponytail: solo notas; fotos y videos no tienen texto.
+  app.get("/search", async (c) => {
+    const q = (c.req.query("q") ?? "").trim().slice(0, 100);
+    if (q.length < 2) return c.json({ results: [] });
+    const rows = await db.all(
+      "SELECT date, note FROM days WHERE note LIKE ? ESCAPE '\\' ORDER BY date DESC LIMIT 50",
+      `%${q.replace(/[\\%_]/g, "\\$&")}%`,
+    );
+    const results = [];
+    for (const r of rows) {
+      const first = await db.get(
+        "SELECT id FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at LIMIT 1",
+        String(r.date),
+        String(r.date) + END,
+      );
+      results.push({ date: String(r.date), note: String(r.note), cover: first ? Number(first.id) : null });
+    }
+    return c.json({ results });
   });
 
   // Nota de texto de un día; vacía = borrar.
