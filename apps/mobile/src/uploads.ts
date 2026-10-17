@@ -6,8 +6,8 @@ import { queueStore } from "./queue-store";
 // "2021:03:04 05:06:07" -> hora local ISO sin zona
 const exifDate = (v: unknown) => (typeof v === "string" ? v.replace(/^(\d{4}):(\d{2}):(\d{2}) /, "$1-$2-$3T") : undefined);
 
-/** Abre la galería del sistema (fotos y videos, varios a la vez) y deja lo elegido en la cola. Con `forDate` (AAAA-MM-DD) todo cae en ese día. Devuelve cuántos. */
-export async function pickAndEnqueue(forDate?: string): Promise<number> {
+/** Abre la galería del sistema (fotos y videos, varios a la vez) y deja lo elegido en la cola. Con `forDate` (AAAA-MM-DD) todo cae en ese día; con `collection`, además entra a ese álbum. Devuelve cuántos. */
+export async function pickAndEnqueue(forDate?: string, collection?: number): Promise<number> {
   const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images", "videos"], allowsMultipleSelection: true, exif: true });
   if (res.canceled) return 0;
   markPreparing();
@@ -19,6 +19,7 @@ export async function pickAndEnqueue(forDate?: string): Promise<number> {
       fileName: a.fileName,
       file: a.file,
       takenAt: forDate ? `${forDate}T12:00:00` : exifDate(a.exif?.DateTimeOriginal),
+      collection,
     })),
   );
 }

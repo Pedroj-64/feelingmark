@@ -9,6 +9,8 @@ const nativePart = (uri: string, name: string, type: string) => ({ name, type, b
 
 export type Album = { month: string; count: number; cover: number };
 
+export type Collection = { id: number; name: string; count: number; cover: number | null; people: number; shared: boolean };
+export type CollectionDetail = { id: number; name: string; cover: number | null; people: number; shared: boolean; items: TimelineItem[] };
 export type Stats = { photos: number; videos: number; notes: number; first: string | null; last: string | null };
 export type Memory = { date: string; ids: number[]; videos: number[]; note?: string };
 export type SearchHit = { date: string; note: string; cover: number | null };
@@ -57,6 +59,66 @@ export function createApi({ url, token }: Conn) {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     },
+    // --- Álbumes propios ---
+    async collections(): Promise<Collection[]> {
+      const r = await fetch(`${url}/collections`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return (await r.json()).collections;
+    },
+    async createCollection(name: string): Promise<number> {
+      const r = await fetch(`${url}/collections`, {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return (await r.json()).id;
+    },
+    async collection(id: number): Promise<CollectionDetail> {
+      const r = await fetch(`${url}/collections/${id}`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    },
+    async updateCollection(id: number, patch: { name?: string; cover?: number | null }) {
+      const r = await fetch(`${url}/collections/${id}`, {
+        method: "PATCH",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
+    async deleteCollection(id: number) {
+      const r = await fetch(`${url}/collections/${id}`, { method: "DELETE", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
+    async addToCollection(id: number, ids: number[]) {
+      const r = await fetch(`${url}/collections/${id}/items`, {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
+    async removeFromCollection(id: number, photo: number) {
+      const r = await fetch(`${url}/collections/${id}/items/${photo}`, { method: "DELETE", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
+    /** Enlace de invitación (solo ver y descargar). Si ya existía devuelve el mismo. */
+    async invite(id: number): Promise<string> {
+      const r = await fetch(`${url}/collections/${id}/invite`, { method: "POST", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return `${url}${(await r.json()).path}`;
+    },
+    async revokeInvite(id: number) {
+      const r = await fetch(`${url}/collections/${id}/invite`, { method: "DELETE", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
+    /** Enlace de descarga .zip para abrir en el navegador; caduca a los 10 minutos. */
+    async downloadLink(id: number): Promise<string> {
+      const r = await fetch(`${url}/collections/${id}/download`, { method: "POST", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return `${url}${(await r.json()).path}`;
+    },
     async stats(): Promise<Stats> {
       const r = await fetch(`${url}/stats`, { headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -100,7 +162,7 @@ export function createApi({ url, token }: Conn) {
       const body = (await r.json().catch(() => ({}))) as { orphaned?: number };
       return typeof body.orphaned === "number" ? body.orphaned : 0;
     },
-    async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File; takenAt?: string }) {
+    async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File; takenAt?: string; collection?: number }) {
       const form = new FormData();
       const type = asset.mimeType ?? "image/jpeg";
       if (Platform.OS === "web") form.append("file", asset.file ?? (await (await fetch(asset.uri)).blob()), asset.fileName ?? "photo");
@@ -119,6 +181,7 @@ export function createApi({ url, token }: Conn) {
         /* sin miniatura */
       }
       if (asset.takenAt) form.append("takenAt", asset.takenAt);
+      if (asset.collection) form.append("collection", String(asset.collection));
       const r = await fetch(`${url}/photos`, { method: "POST", body: form, headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json() as Promise<{ id: number; takenAt: string; duplicate: boolean }>;

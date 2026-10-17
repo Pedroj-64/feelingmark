@@ -1,11 +1,12 @@
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { Play } from "phosphor-react-native";
 import { createApi, type Api, type TimelineItem } from "../../src/api";
+import { useTimeline } from "../../src/use-timeline";
 import { loadConn } from "../../src/settings";
 import { useTheme } from "../../src/theme";
 import { Skeleton, Text } from "../../src/ui";
@@ -21,43 +22,20 @@ export default function Gallery() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [api, setApi] = useState<Api | null>(null);
-  const [items, setItems] = useState<TimelineItem[] | null>(null);
-  const next = useRef<string | null>(null);
-  const loading = useRef(false);
-  const [error, setError] = useState(false);
-
-  const page = useCallback(
-    async (a: Api, reset: boolean) => {
-      if (loading.current) return;
-      if (!reset && next.current === null && items) return; // ya se cargó todo
-      loading.current = true;
-      try {
-        const r = await a.timeline(reset ? null : next.current);
-        next.current = r.next;
-        setItems((prev) => (reset || !prev ? r.items : [...prev, ...r.items]));
-        setError(false);
-      } catch {
-        setError(true);
-      } finally {
-        loading.current = false;
-      }
-    },
-    [items],
-  );
+  const { items, error, reset, more } = useTimeline();
+  const [noServer, setNoServer] = useState(false);
 
   // Al volver a la pestaña se empieza de cero: así aparece lo recién subido.
   useFocusEffect(
     useCallback(() => {
       loadConn().then((conn) => {
-        if (!conn) return setItems([]);
+        if (!conn) return setNoServer(true);
+        setNoServer(false);
         const a = createApi(conn);
         setApi(a);
-        next.current = null;
-        loading.current = false;
-        void page(a, true);
+        void reset(a);
       });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
+    }, [reset]),
   );
 
   const size = (Math.min(width, 720) - 32 - GAP * (COLS - 1)) / COLS;
@@ -92,7 +70,8 @@ export default function Gallery() {
         <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
           {t("tabs.gallery")}
         </Text>
-        {items === null && (
+        {noServer && <Text style={{ color: c.muted, marginTop: 12 }}>{t("home.connectTitle")}</Text>}
+        {items === null && !noServer && (
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GAP }}>
             {Array.from({ length: 12 }, (_, i) => (
               <Skeleton key={i} style={{ width: size, height: size, borderRadius: 6 }} />
@@ -103,7 +82,7 @@ export default function Gallery() {
         <FlatList
           data={rows}
           keyExtractor={(r) => r.key}
-          onEndReached={() => api && void page(api, false)}
+          onEndReached={() => api && void more(api)}
           onEndReachedThreshold={0.6}
           initialNumToRender={8}
           windowSize={7}

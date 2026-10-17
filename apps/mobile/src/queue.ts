@@ -5,6 +5,8 @@ export type Pending = {
   mimeType?: string;
   fileName?: string | null;
   takenAt?: string;
+  /** Álbum propio al que debe entrar al subirse. */
+  collection?: number;
   file?: File;
   tries: number;
 };
