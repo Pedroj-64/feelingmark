@@ -3,6 +3,7 @@ import { bearerAuth } from "hono/bearer-auth";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { MEDIA_EXT, digest, hex, ingest, isVideo } from "./ingest.ts";
+import { mountCollections } from "./collections.ts";
 import type { Db } from "./db.ts";
 import type { StorageAdapter } from "./storage.ts";
 
@@ -43,7 +44,20 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   const app = new Hono();
   app.use("*", cors()); // el cliente web puede vivir en otro origen; el acceso lo protege el token
   const auth = bearerAuth({ token, verifyToken: (t) => safeEqual(t, token) });
-  for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*", "/memories", "/search", "/timeline", "/stats"])
+  for (const p of [
+    "/photos",
+    "/photos/*",
+    "/days/*",
+    "/albums",
+    "/albums/*",
+    "/shares/*",
+    "/memories",
+    "/search",
+    "/timeline",
+    "/stats",
+    "/collections",
+    "/collections/*",
+  ])
     app.use(p, auth); // la web estática queda fuera del token
 
   // Tope por subida (el archivo se carga entero en memoria): 413 sin leer el cuerpo si Content-Length ya lo supera.
@@ -65,6 +79,14 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
         thumb,
       },
     );
+    // Subir directo a un álbum: la foto (aunque ya existiera) entra también en él.
+    const col = Number(form.collection);
+    if (Number.isInteger(col) && col > 0)
+      await db.run(
+        "INSERT OR IGNORE INTO collection_items (collection_id, photo_id) SELECT id, ? FROM collections WHERE id = ?",
+        r.id,
+        col,
+      );
     return c.json({ id: r.id, takenAt: r.takenAt, duplicate: r.duplicate }, r.duplicate ? 200 : 201);
   });
 
@@ -364,6 +386,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     shared((_, m) => videoOf(m)),
   );
 
+  mountCollections(app, { db, storage, token, guard, thumbOf, fileOf, randomId, hmac, safeEqual });
+
   // Borra la foto o el video: la fila primero (deja de verse al instante) y luego los archivos.
   // Si el almacenamiento falla quedan bytes huérfanos, pero la entrada ya no existe; mejor eso que dejarla a medias.
   app.delete("/photos/:id", async (c) => {
@@ -371,6 +395,8 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     const row = await db.get("SELECT key, hash FROM photos WHERE id = ?", id);
     if (!row) return c.json({ error: "not found" }, 404);
     await db.run("DELETE FROM photos WHERE id = ?", id);
+    await db.run("DELETE FROM collection_items WHERE photo_id = ?", id);
+    await db.run("UPDATE collections SET cover_id = NULL WHERE cover_id = ?", id);
     const keys = [String(row.key), ...["client", "webp", "poster"].map((x) => `thumbs/${row.hash}.${x}`)];
     const failed = (await Promise.allSettled(keys.map((k) => storage.delete(k)))).filter((r) => r.status === "rejected").length;
     return c.json({ ok: true, ...(failed && { orphaned: failed }) });

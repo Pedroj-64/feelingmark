@@ -21,6 +21,12 @@ const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, month TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
   "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
   "CREATE TABLE IF NOT EXISTS days (date TEXT PRIMARY KEY, note TEXT NOT NULL)",
+  // Álbumes propios: nombre, portada y fotos (una foto puede estar en varios). Las invitaciones son un enlace por álbum.
+  "CREATE TABLE IF NOT EXISTS collections (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cover_id INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS collection_items (collection_id INTEGER NOT NULL, photo_id INTEGER NOT NULL, added_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (collection_id, photo_id))",
+  "CREATE INDEX IF NOT EXISTS collection_items_photo ON collection_items (photo_id)",
+  "CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, collection_id INTEGER NOT NULL UNIQUE, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS invite_views (invite_id TEXT NOT NULL, viewer TEXT NOT NULL, first_seen TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (invite_id, viewer))",
 ];
 // Bases creadas antes de v0.1.1 no tienen thumb_mime; el ALTER falla sin daño si ya existe.
 const UPGRADES = ["ALTER TABLE photos ADD COLUMN thumb_mime TEXT"];
