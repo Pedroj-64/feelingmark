@@ -9,6 +9,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - La app avisa cuando un archivo borrado no se pudo quitar del almacenamiento.
 - Guía `docs/exposing.md`: Tailscale, Cloudflare Tunnel y Caddy para usar el servidor fuera de casa.
 
+- Inicio guiado: según el momento te lleva a conectar el servidor o a añadir tu primer recuerdo; ya en uso muestra hoy, «un día como hoy» (`/memories` en el servidor) y el resumen del mes.
+- Videos desde el teléfono (antes solo fotos) y «Importar un álbum» de la galería: lo ya importado no se repite.
+- Resumen mensual en video dentro de la app (reproductor propio).
+- Búsqueda en las notas de los días (`/search`).
+- Selector de fecha nativo para mover un archivo de día.
+- Álbumes agrupados por año; iconos en las pestañas; esqueletos de carga; fuente Geist en el cuerpo.
+
 ### Changed
 - El release publica un APK por arquitectura (arm64-v8a, armeabi-v7a, x86_64; ~40 MB cada uno) más uno universal (~122 MB), y un `SHA256SUMS.txt`. La guía de instalación explica cómo instalar sin tienda.
 

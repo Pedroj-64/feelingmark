@@ -17,15 +17,11 @@ Legend / Leyenda: **Effort / Esfuerzo** S·M·L
 ### 2. Interfaz (0.3.x) — ver [`ui-review.md`](ui-review.md)
 | Qué | Esfuerzo |
 |---|---|
-| #4 Selector de fecha nativo para mover una foto (hoy es un campo de texto `AAAA-MM-DD`). Requiere un módulo nativo (`@react-native-community/datetimepicker`) y un respaldo en web (`<input type="date">`). | M |
-| #12 Iconos propios para las 3 pestañas. | S |
-| #7 Estados de carga (esqueletos) y un estado vacío diseñado. | M |
 | #8 Logo en el estado vacío y un momento de bienvenida (ya está en Ajustes). | S |
 | #9 Movimiento (cambio de mes, abrir un día) con alternativa para "reducir movimiento". | M |
 | #11 Mosaico asimétrico en la vista de día. | M |
 | #13 Álbumes sin conexión y agrupados por año. | M |
 | #10 Vista de dos paneles (calendario + día) en pantallas anchas. | L |
-| Fuente Geist para el cuerpo del texto (hoy solo Fraunces en los títulos; el resto usa la del sistema). Exige aplicar la fuente a todos los `Text`/`TextInput` o crear un componente propio. | M |
 | Selección múltiple y borrado en bloque; papelera con deshacer (hoy borrar es definitivo). | M |
 
 ### 3. Servidor y seguridad
@@ -62,15 +58,11 @@ Subidas en segundo plano a nivel del sistema operativo (hoy se retoman al abrir 
 ### 2. UI (0.3.x) — see [`ui-review.md`](ui-review.md)
 | What | Effort |
 |---|---|
-| #4 Native date picker to move a photo (today a raw `YYYY-MM-DD` text field). Needs a native module (`@react-native-community/datetimepicker`) and a web fallback (`<input type="date">`). | M |
-| #12 Custom icons for the 3 tabs. | S |
-| #7 Loading skeletons and a designed empty state. | M |
 | #8 Logo in the empty state and a welcome moment (already in Settings). | S |
 | #9 Motion (month change, opening a day) with a reduced-motion fallback. | M |
 | #11 Asymmetric masonry in the day view. | M |
 | #13 Albums offline and grouped by year. | M |
 | #10 Two-pane layout (calendar + day) on wide screens. | L |
-| Geist font for body text (today only Fraunces on titles; the rest uses the system font). Needs applying it to every `Text`/`TextInput` or a custom component. | M |
 | Multi-select and bulk delete; trash with undo (today deletion is permanent). | M |
 
 ### 3. Server and security
