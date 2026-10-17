@@ -6,6 +6,7 @@ services:
       - "8787:8787"
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-}
+      # MAX_UPLOAD_MB: 200   # tope por archivo subido (por defecto 200)
       # VIDEO_MUSIC_FILE: /data/musica.mp3   # copia tu audio dentro de DATA_DIR
       AUTH_TOKEN: ${AUTH_TOKEN:?define AUTH_TOKEN en .env / set AUTH_TOKEN in .env}
     volumes:

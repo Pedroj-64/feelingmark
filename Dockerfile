@@ -1,4 +1,5 @@
-FROM node:26-slim AS web
+# La web es estática: se compila en la arquitectura del runner, sin emular.
+FROM --platform=$BUILDPLATFORM node:26-slim AS web
 RUN npm i -g pnpm@12.14.0
 WORKDIR /app
 COPY . .
