@@ -9,6 +9,10 @@ export async function loadConn(): Promise<Conn | null> {
   const raw = Platform.OS === "web" ? localStorage.getItem(KEY) : await SecureStore.getItemAsync(KEY);
   return raw ? (JSON.parse(raw) as Conn) : null;
 }
+export async function clearConn() {
+  if (Platform.OS === "web") localStorage.removeItem(KEY);
+  else await SecureStore.deleteItemAsync(KEY);
+}
 export async function saveConn(c: Conn) {
   const raw = JSON.stringify({ url: c.url.replace(/\/+$/, ""), token: c.token });
   if (Platform.OS === "web") localStorage.setItem(KEY, raw);

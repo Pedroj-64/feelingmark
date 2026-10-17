@@ -19,3 +19,9 @@ export async function saveMark(albumId: string, mark: number) {
   if (!f.exists) f.create();
   f.write(JSON.stringify(marks));
 }
+
+/** Olvida lo importado: la próxima importación de un álbum vuelve a considerar todo (el servidor no duplica nada). */
+export function clearMarks() {
+  const f = file();
+  if (f.exists) f.write("{}");
+}

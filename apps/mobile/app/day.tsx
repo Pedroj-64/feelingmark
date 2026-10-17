@@ -1,16 +1,17 @@
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api } from "../src/api";
 import { loadConn } from "../src/settings";
-import { Text } from "../src/ui";
+import { Button, Text } from "../src/ui";
 import { useTheme } from "../src/theme";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import { CalendarBlank, Trash } from "phosphor-react-native";
+import { CalendarBlank, Plus, Trash } from "phosphor-react-native";
+import { flushQueue, pickAndEnqueue } from "../src/uploads";
 
 export default function Day() {
   const {
@@ -46,8 +47,30 @@ export default function Day() {
   useEffect(() => () => save(latest.current), [api]);
   useEffect(() => void loadConn().then((conn) => conn && setApi(createApi(conn))), []);
 
-  const photos = (ids ?? "").split(",").filter(Boolean).map(Number);
-  const videoSet = new Set((videoIds ?? "").split(",").filter(Boolean).map(Number));
+  const nums = (v?: string) => (v ?? "").split(",").filter(Boolean).map(Number);
+  const [photos, setPhotos] = useState<number[]>(nums(ids));
+  const [videoSet, setVideoSet] = useState(new Set(nums(videoIds)));
+  // El día se vuelve a pedir al servidor: así al añadir fotos aquí aparecen sin salir de la pantalla.
+  const reload = useCallback(
+    async (a: Api) => {
+      try {
+        const m = await a.month(date.slice(0, 7));
+        setPhotos(m.days[date] ?? []);
+        setVideoSet(new Set(m.videos ?? []));
+      } catch {
+        /* sin red: se queda lo que ya se mostraba */
+      }
+    },
+    [date],
+  );
+  useEffect(() => void (api && reload(api)), [api, reload]);
+  const addHere = async () => {
+    if (!api) return;
+    if ((await pickAndEnqueue(date)) > 0) {
+      await flushQueue(api);
+      await reload(api);
+    }
+  };
   const rawTitle = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, {
     weekday: "long",
     day: "numeric",
@@ -84,6 +107,14 @@ export default function Day() {
           style={[s.note, { color: c.ink, borderColor: noteErr ? c.accent : c.muted, backgroundColor: c.surface }]}
         />
         {noteErr && <Text style={{ color: c.accent, marginBottom: 12 }}>{t("common.error")}</Text>}
+        <Button
+          label={t("day.addHere")}
+          icon={<Plus size={22} color={c.onAccent} />}
+          disabled={!api}
+          onPress={addHere}
+          style={{ marginBottom: 20 }}
+        />
+        {photos.length === 0 && <Text style={{ color: c.muted, textAlign: "center", marginVertical: 12 }}>{t("day.empty")}</Text>}
         <View style={{ gap: 20 }}>
           {api &&
             photos.map((id, i) => (

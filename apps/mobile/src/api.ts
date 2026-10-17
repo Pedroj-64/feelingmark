@@ -9,8 +9,11 @@ const nativePart = (uri: string, name: string, type: string) => ({ name, type, b
 
 export type Album = { month: string; count: number; cover: number };
 
+export type Stats = { photos: number; videos: number; notes: number; first: string | null; last: string | null };
 export type Memory = { date: string; ids: number[]; videos: number[]; note?: string };
 export type SearchHit = { date: string; note: string; cover: number | null };
+
+export type TimelineItem = { id: number; takenAt: string; video: boolean };
 
 export type MonthData = {
   month: string;
@@ -47,6 +50,17 @@ export function createApi({ url, token }: Conn) {
       const r = await fetch(`${url}/photos/${id}/link`, { method: "POST", headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return `${url}${(await r.json()).path}`;
+    },
+    /** Toda la biblioteca, lo más reciente primero, por páginas. `next` es el cursor de la página siguiente (null = no hay más). */
+    async timeline(cursor?: string | null): Promise<{ items: TimelineItem[]; next: string | null }> {
+      const r = await fetch(`${url}/timeline?limit=90${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    },
+    async stats(): Promise<Stats> {
+      const r = await fetch(`${url}/stats`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
     },
     /** "Un día como hoy": lo de ese día y mes en años anteriores. */
     async memories(date: string): Promise<Memory[]> {

@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   Text as RNText,
+  View,
   type TextProps,
   type ViewStyle,
   type StyleProp,
@@ -102,5 +103,57 @@ export function Button({
       {icon}
       <Text style={{ color: primary ? c.onAccent : c.accent, fontWeight: "600", fontSize: 16 }}>{label}</Text>
     </Pressable>
+  );
+}
+
+/** Selector de 2 a 3 opciones, una activa. */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  const c = useTheme();
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={label}
+      style={{
+        flexDirection: "row",
+        borderWidth: 1,
+        borderColor: c.line,
+        borderRadius: 14,
+        padding: 3,
+        backgroundColor: c.surface,
+        gap: 3,
+      }}
+    >
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on }}
+            onPress={() => onChange(o.value)}
+            style={{
+              flex: 1,
+              minHeight: 44,
+              borderRadius: 11,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: on ? c.accent : "transparent",
+            }}
+          >
+            <Text style={{ color: on ? c.onAccent : c.ink, fontWeight: "600" }}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }

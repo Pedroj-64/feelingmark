@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CaretDown } from "phosphor-react-native";
 import { Platform, Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -9,6 +10,7 @@ import { monthGrid, shiftMonth } from "../../src/calendar";
 import { monthCache } from "../../src/month-cache-store";
 import { loadConn } from "../../src/settings";
 import { useTheme } from "../../src/theme";
+import { MonthPicker } from "../../src/month-picker";
 import { flushQueue, pickAndEnqueue } from "../../src/uploads";
 import { Button, Skeleton, Text } from "../../src/ui";
 
@@ -32,6 +34,7 @@ export default function CalendarScreen() {
   const [data, setData] = useState<MonthData | null>(null);
   const [api, setApi] = useState<Api | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
 
   const load = useCallback(
     async (a: Api, m: string) => {
@@ -74,14 +77,10 @@ export default function CalendarScreen() {
   // Sube lo pendiente de la cola (también lo que quedó de una sesión anterior).
   const flush = useCallback(
     async (a: Api, month: string) => {
-      const r = await flushQueue(a, (left) => setStatus(t("calendar.uploadingLeft", { count: left })));
-      if (!r) return; // otro vaciado ya está en marcha
-      if (r.done > 0) await load(a, month);
-      if (r.left > 0) setStatus(t("calendar.pending", { count: r.left }));
-      else if (r.dropped > 0) setStatus(t("calendar.dropped", { count: r.dropped }));
-      else if (r.done > 0) setStatus(t("calendar.uploaded", { count: r.done }));
+      const r = await flushQueue(a); // el avance lo muestra el aviso flotante
+      if (r && r.done > 0) await load(a, month);
     },
-    [load, t],
+    [load],
   );
 
   useFocusEffect(
@@ -128,9 +127,18 @@ export default function CalendarScreen() {
           <Pressable onPress={() => go(-1)} hitSlop={12} style={s.nav} accessibilityRole="button" accessibilityLabel={t("a11y.prevMonth")}>
             <Text style={{ color: c.ink, fontSize: 22 }}>‹</Text>
           </Pressable>
-          <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
-            {title}
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${title}. ${t("picker.open")}`}
+            onPress={() => setPicking(true)}
+            hitSlop={8}
+            style={s.titleBtn}
+          >
+            <Text accessibilityRole="header" style={[s.title, { color: c.ink }]}>
+              {title}
+            </Text>
+            <CaretDown size={18} color={c.muted} />
+          </Pressable>
           <Pressable onPress={() => go(1)} hitSlop={12} style={s.nav} accessibilityRole="button" accessibilityLabel={t("a11y.nextMonth")}>
             <Text style={{ color: c.ink, fontSize: 22 }}>›</Text>
           </Pressable>
@@ -151,9 +159,7 @@ export default function CalendarScreen() {
               return (
                 <Pressable
                   key={i}
-                  disabled={!ids && !note}
-                  accessible={Boolean(ids || note)}
-                  accessibilityRole={ids || note ? "button" : undefined}
+                  accessibilityRole="button"
                   accessibilityLabel={dayLabel(d, ids?.length ?? 0, Boolean(note), Boolean(ids?.some((x) => data?.videos?.includes(x))))}
                   onPress={() =>
                     router.push({
@@ -220,6 +226,7 @@ export default function CalendarScreen() {
           </View>
         )}
       </ScrollView>
+      <MonthPicker visible={picking} ym={ym} api={api} onPick={(m) => (setData(null), setYm(m))} onClose={() => setPicking(false)} />
     </SafeAreaView>
   );
 }
@@ -228,6 +235,7 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 20 },
   nav: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  titleBtn: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 44 },
   title: { fontSize: 24, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.4 },
   row: { flexDirection: "row", paddingHorizontal: 16 },
   wd: { textAlign: "center", fontSize: 12, paddingBottom: 6 },

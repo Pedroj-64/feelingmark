@@ -54,8 +54,7 @@ export default function Home() {
     useCallback(() => {
       load().then(async (api) => {
         if (!api) return;
-        const r = await flushQueue(api, (left) => setStatus(t("calendar.uploadingLeft", { count: left })));
-        setStatus(r && r.left > 0 ? t("calendar.pending", { count: r.left }) : null);
+        const r = await flushQueue(api); // el avance lo muestra el aviso flotante
         if (r && r.done > 0) void load();
       });
     }, [load, t]),
@@ -64,8 +63,7 @@ export default function Home() {
   const pick = async () => {
     if (state.kind !== "ready") return;
     if ((await pickAndEnqueue()) > 0) {
-      const r = await flushQueue(state.api, (left) => setStatus(t("calendar.uploadingLeft", { count: left })));
-      setStatus(r && r.done > 0 ? t("calendar.uploaded", { count: r.done }) : null);
+      await flushQueue(state.api);
       void load();
     }
   };
