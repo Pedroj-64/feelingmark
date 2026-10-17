@@ -59,7 +59,7 @@ test("la fecha sale del EXIF y el calendario agrupa por día", async () => {
   assert.equal(r.status, 201);
   const month = await (await app.request("/photos?month=2021-03", { headers: auth })).json();
   assert.equal(Object.keys(month.days).length, 1);
-  assert.match(Object.keys(month.days)[0], /^2021-03-0[34]$/); // depende de la zona horaria
+  assert.deepEqual(Object.keys(month.days), ["2021-03-04"]); // el día de la cámara, sea cual sea la zona del servidor
 });
 
 test("duplicado por hash y fecha manual con prioridad; PATCH mueve de día", async () => {

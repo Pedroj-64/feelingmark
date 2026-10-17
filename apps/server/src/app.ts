@@ -1,19 +1,13 @@
 import { Hono, type Context } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { cors } from "hono/cors";
-import exifr from "exifr";
+import { MEDIA_EXT, digest, hex, ingest, isVideo } from "./ingest.ts";
 import type { Db } from "./db.ts";
 import type { StorageAdapter } from "./storage.ts";
 
 const MONTH = /^\d{4}-\d{2}$/;
 const END = "￿"; // cota superior para comparar prefijos de fecha ISO
 
-const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic" };
-
-// WebCrypto en lugar de node:crypto: el mismo código corre en Node y en Workers.
-const hex = (b: ArrayBuffer | Uint8Array) => [...new Uint8Array(b as ArrayBuffer)].map((x) => x.toString(16).padStart(2, "0")).join("");
-const digest = async (algo: "SHA-1" | "SHA-256", data: Uint8Array | string) =>
-  hex(await crypto.subtle.digest(algo, (typeof data === "string" ? new TextEncoder().encode(data) : data) as Uint8Array<ArrayBuffer>));
 const randomId = () => hex(crypto.getRandomValues(new Uint8Array(12)));
 function safeEqual(a: string, b: string) {
   const x = new TextEncoder().encode(a);
@@ -23,20 +17,15 @@ function safeEqual(a: string, b: string) {
   return d === 0;
 }
 
-/** Fecha de captura: la indicada por el usuario > EXIF > fecha del archivo > ahora. */
-async function takenAt(bytes: Uint8Array, given: unknown, lastModified: number): Promise<string> {
-  if (typeof given === "string" && !Number.isNaN(Date.parse(given))) return new Date(given).toISOString();
-  const exif = await exifr.parse(bytes, ["DateTimeOriginal"]).catch(() => null);
-  const d: unknown = exif?.DateTimeOriginal;
-  if (d instanceof Date && !Number.isNaN(d.getTime())) return d.toISOString();
-  return new Date(lastModified || Date.now()).toISOString();
-}
-
 export type Capabilities = {
   /** Miniatura desde la foto original (solo Node, vía sharp). */
   thumbnail?: (img: Uint8Array) => Promise<Uint8Array>;
   /** Presentación en video de varias fotos (solo Node, vía ffmpeg). */
   slideshow?: (images: Uint8Array[]) => Promise<Uint8Array>;
+  /** Fecha de grabación de un video (solo Node, vía ffprobe), como hora de reloj ISO. */
+  videoDate?: (video: Uint8Array) => Promise<string | undefined>;
+  /** Imagen de portada de un video (solo Node, vía ffmpeg). */
+  videoPoster?: (video: Uint8Array) => Promise<Uint8Array>;
 };
 
 type Asset = { data: Uint8Array; mime: string };
@@ -51,42 +40,41 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   app.post("/photos", async (c) => {
     const form = await c.req.parseBody();
     const file = form.file;
-    if (!(file instanceof File) || !EXT[file.type]) return c.json({ error: "file must be jpeg/png/webp/heic" }, 400);
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const hash = await digest("SHA-256", bytes);
-    const dup = await db.get("SELECT id, taken_at FROM photos WHERE hash = ?", hash);
-    if (dup) return c.json({ id: dup.id, takenAt: dup.taken_at, duplicate: true });
-    const taken = await takenAt(bytes, form.takenAt, file.lastModified);
-    const key = `${taken.slice(0, 7)}/${hash}.${EXT[file.type]}`;
-    await storage.put(key, bytes);
-    // Miniatura opcional hecha por el cliente (único camino en Workers, donde no hay sharp).
-    const thumb = form.thumb;
-    let thumbMime: string | null = null;
-    if (thumb instanceof File && /^image\/(webp|jpeg)$/.test(thumb.type) && thumb.size <= 500_000) {
-      await storage.put(`thumbs/${hash}.client`, new Uint8Array(await thumb.arrayBuffer()));
-      thumbMime = thumb.type;
-    }
-    const { lastId } = await db.run(
-      "INSERT INTO photos (key, hash, mime, taken_at, thumb_mime) VALUES (?,?,?,?,?)",
-      key,
-      hash,
-      file.type,
-      taken,
-      thumbMime,
+    if (!(file instanceof File) || !MEDIA_EXT[file.type])
+      return c.json({ error: "file must be a jpeg/png/webp/heic photo or an mp4/mov/webm/3gp video" }, 400);
+    const thumb = form.thumb instanceof File ? { bytes: new Uint8Array(await form.thumb.arrayBuffer()), mime: form.thumb.type } : undefined;
+    const r = await ingest(
+      { db, storage, videoDate: opts.videoDate },
+      {
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        mime: file.type,
+        name: file.name,
+        lastModified: file.lastModified,
+        takenAt: form.takenAt,
+        thumb,
+      },
     );
-    return c.json({ id: lastId, takenAt: taken, duplicate: false }, 201);
+    return c.json({ id: r.id, takenAt: r.takenAt, duplicate: r.duplicate }, r.duplicate ? 200 : 201);
   });
 
   // ?month=YYYY-MM  ->  fotos agrupadas por día (para el calendario)
   app.get("/photos", async (c) => {
     const month = c.req.query("month") ?? "";
     if (!MONTH.test(month)) return c.json({ error: "month=YYYY-MM required" }, 400);
-    const rows = await db.all("SELECT id, taken_at FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at", month, month + END);
+    const rows = await db.all(
+      "SELECT id, taken_at, mime FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at",
+      month,
+      month + END,
+    );
     const days: Record<string, number[]> = {};
-    for (const r of rows) (days[String(r.taken_at).slice(0, 10)] ??= []).push(Number(r.id));
+    const videos: number[] = []; // ids que son video (la app los muestra con ▶ y los reproduce)
+    for (const r of rows) {
+      (days[String(r.taken_at).slice(0, 10)] ??= []).push(Number(r.id));
+      if (isVideo(String(r.mime))) videos.push(Number(r.id));
+    }
     const notes: Record<string, string> = {};
     for (const r of await db.all("SELECT date, note FROM days WHERE date LIKE ?", `${month}-%`)) notes[String(r.date)] = String(r.note);
-    return c.json({ month, days, notes, video: Boolean(opts.slideshow) });
+    return c.json({ month, days, notes, videos, video: Boolean(opts.slideshow) });
   });
 
   // Un álbum por cada mes con fotos (el más reciente primero): cuántas hay y cuál usar de portada.
@@ -109,7 +97,23 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   });
 
   const CACHE = "private, max-age=31536000, immutable";
-  const send = (c: Context, a: Asset) => c.body(a.data as Uint8Array<ArrayBuffer>, 200, { "content-type": a.mime, "cache-control": CACHE });
+  // Los videos admiten Range (206) para poder reproducirlos y avanzar sin descargar todo el archivo.
+  const send = (c: Context, a: Asset) => {
+    const base = { "content-type": a.mime, "cache-control": CACHE, "accept-ranges": "bytes" };
+    const range = /^bytes=(\d*)-(\d*)$/.exec(c.req.header("range") ?? "");
+    if (range && isVideo(a.mime)) {
+      const total = a.data.length;
+      const suffix = range[1] === "";
+      const start = suffix ? total - Number(range[2]) : Number(range[1]);
+      const end = suffix || range[2] === "" ? total - 1 : Math.min(Number(range[2]), total - 1);
+      if (!(start >= 0 && start <= end && start < total)) return c.body(null, 416, { "content-range": `bytes */${total}` });
+      return c.body(a.data.slice(start, end + 1) as Uint8Array<ArrayBuffer>, 206, {
+        ...base,
+        "content-range": `bytes ${start}-${end}/${total}`,
+      });
+    }
+    return c.body(a.data as Uint8Array<ArrayBuffer>, 200, base);
+  };
   // Cualquier error de almacenamiento (p. ej. disco extraíble desconectado) se responde 503.
   const guard = (h: (c: Context) => Promise<Asset | null>) => async (c: Context) => {
     try {
@@ -136,6 +140,20 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
       const client = await storage.get(`thumbs/${row.hash}.client`).catch(() => null);
       if (client) return { data: client, mime: String(row.thumb_mime) };
     }
+    if (isVideo(String(row.mime))) {
+      // Portada de un video: se genera con ffmpeg al primer uso; sin ffmpeg no hay miniatura (la app muestra un marcador).
+      const pkey = `thumbs/${row.hash}.poster`;
+      const cachedPoster = await storage.get(pkey).catch(() => null);
+      if (cachedPoster) return { data: cachedPoster, mime: "image/jpeg" };
+      if (!opts.videoPoster) return null;
+      try {
+        const poster = await opts.videoPoster(await storage.get(String(row.key)));
+        await storage.put(pkey, poster);
+        return { data: poster, mime: "image/jpeg" };
+      } catch {
+        return null; // video corrupto o ffmpeg ausente
+      }
+    }
     const tkey = `thumbs/${row.hash}.webp`;
     const cached = await storage.get(tkey).catch(() => null);
     if (cached) return { data: cached, mime: "image/webp" };
@@ -156,7 +174,7 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
   // ponytail: sin cola; dos peticiones simultáneas generan dos veces. Añadir un lock si hace falta.
   const videoOf = async (month: string): Promise<Asset | null> => {
     const rows = await db.all(
-      "SELECT id, key, hash FROM photos WHERE taken_at >= ? AND taken_at < ? ORDER BY taken_at, id",
+      "SELECT id, key, hash FROM photos WHERE taken_at >= ? AND taken_at < ? AND mime LIKE 'image/%' ORDER BY taken_at, id",
       month,
       month + END,
     );

@@ -8,7 +8,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { createApp } from "./app.ts";
 import type { Db } from "./db.ts";
 import { openDb } from "./db-node.ts";
-import { thumbnail } from "./node-tools.ts";
+import { thumbnail, videoDate, videoPoster } from "./node-tools.ts";
 import { buildSlideshow } from "./video.ts";
 import { gdriveStorage } from "./gdrive.ts";
 import { getRefreshToken, mountGoogleOAuth } from "./oauth-google.ts";
@@ -54,7 +54,15 @@ if (music && !existsSync(music)) {
   music = undefined;
 }
 const db = await openDb(dbPath);
-const app = createApp({ db, storage: pickStorage(db), token, thumbnail, slideshow: (imgs) => buildSlideshow(imgs, { music }) });
+const app = createApp({
+  db,
+  storage: pickStorage(db),
+  token,
+  thumbnail,
+  videoDate,
+  videoPoster,
+  slideshow: (imgs) => buildSlideshow(imgs, { music }),
+});
 if (process.env.STORAGE_DRIVER === "gdrive") {
   const redirectBase = process.env.GOOGLE_REDIRECT_BASE || `http://localhost:${process.env.PORT ?? 8787}`;
   mountGoogleOAuth(app, { db, creds: googleCreds(), redirectBase, token });
