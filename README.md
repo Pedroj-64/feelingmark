@@ -7,6 +7,12 @@
   <img src="docs/media/demo-en.gif" alt="Feelingmark walkthrough: calendar, day view and adding photos" width="300">
 </div>
 
+<p align="center">
+  <img src="docs/media/android-calendar.png" alt="Calendar on Android, with photo thumbnails and a video badge" width="220">
+  <img src="docs/media/android-day.png" alt="Day view with a note and photos at their real proportions" width="220">
+  <img src="docs/media/android-settings.png" alt="Settings: scan the pairing QR, test the connection" width="220">
+</p>
+
 **A self-hosted photo calendar and memory album.** Bring your own storage; Feelingmark brings the order: one calendar, one day at a time.
 
 Built as an open alternative for people who liked apps like Dots Memories but don't want their memories locked into someone else's subscription. Mobile app (Android/iOS) and web client share the same code.
@@ -25,7 +31,7 @@ Built as an open alternative for people who liked apps like Dots Memories but do
 - **Video recap of the month** with soft cross-fades and optional music (ffmpeg, Docker/Node servers).
 - **Reliable uploads:** photos are queued and retried; whatever failed (no network) uploads by itself next time you open the app.
 - **Works offline:** the calendar shows the last view of each month and the thumbnails you already saw when the server is unreachable.
-- Pair your phone by scanning the QR the server prints at startup.
+- Pair your phone by scanning a QR (one-time code that expires; shown at startup and at `/pair`).
 - Light/dark mode, English and Spanish (more languages welcome).
 - Storage on a local disk or any S3-compatible service (Cloudflare R2, Backblaze B2, MinIO).
 

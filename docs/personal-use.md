@@ -9,7 +9,7 @@ Run Feelingmark on your own computer, keep everything in a folder you choose, an
 git clone https://github.com/Pedroj-64/feelingmark && cd feelingmark && pnpm install
 mkdir -p ~/FeelingmarkData
 export STORAGE_PATH=$HOME/FeelingmarkData/photos DATABASE_PATH=$HOME/FeelingmarkData/feelingmark.sqlite AUTH_TOKEN=$(openssl rand -hex 24)
-cd apps/server && pnpm dev     # prints a QR to pair your phone; keep the token somewhere safe
+cd apps/server && pnpm dev     # prints a QR to pair your phone (or open http://localhost:8787/pair); keep the token somewhere safe
 ```
 Use absolute paths outside the repository. Back up that one folder (photos + `.sqlite`) and you have backed up everything.
 
@@ -41,7 +41,7 @@ Ejecuta Feelingmark en tu propio computador, guarda todo en una carpeta que elij
 git clone https://github.com/Pedroj-64/feelingmark && cd feelingmark && pnpm install
 mkdir -p ~/FeelingmarkData
 export STORAGE_PATH=$HOME/FeelingmarkData/photos DATABASE_PATH=$HOME/FeelingmarkData/feelingmark.sqlite AUTH_TOKEN=$(openssl rand -hex 24)
-cd apps/server && pnpm dev     # imprime un QR para emparejar el teléfono; guarda el token
+cd apps/server && pnpm dev     # imprime un QR para emparejar el teléfono (o abre http://localhost:8787/pair); guarda el token
 ```
 Usa rutas absolutas fuera del repositorio. Respalda esa carpeta (fotos + `.sqlite`) y lo habrás respaldado todo.
 

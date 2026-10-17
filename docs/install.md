@@ -16,7 +16,7 @@ Without Docker: Node 26+, `pnpm install`, then `cd apps/server && AUTH_TOKEN=...
 ### 2. Connect the app
 Open the web client or the Android app → **Settings** → enter the server URL and the token. On a phone use your machine's LAN address (`http://192.168.x.x:8787`). Over the internet put the server behind HTTPS (Caddy, nginx, Cloudflare Tunnel): the token travels in a header.
 
-**Pair with a QR:** when the server starts it prints a QR in the terminal. Scan it with your phone's camera: the app opens and asks you to confirm. In Docker set `PUBLIC_URL=http://<your-LAN-ip>:8787` so the QR has the right address (`docker compose logs feelingmark` shows it).
+**Pair with a QR:** open the app and tap **Scan QR**. The server prints a QR when it starts (`docker compose logs feelingmark` in Docker), and you can show a new one any time at `http://<your-machine>:8787/pair` (type your `AUTH_TOKEN` there). The QR holds a one-time code that expires in 15 minutes, never your token. `/pair` uses the address you opened it with, so it works in Docker as is; for the QR printed in the logs set `PUBLIC_URL=http://<your-LAN-ip>:8787`.
 
 ### 3. Android app
 Download the signed APK from the [Releases](https://github.com/Pedroj-64/feelingmark/releases) page, or build it: `cd apps/mobile && npx expo prebuild --platform android && cd android && ./gradlew assembleRelease` (JDK 21 + Android SDK).
@@ -43,7 +43,7 @@ Sin Docker: Node 26+, `pnpm install` y `cd apps/server && AUTH_TOKEN=... pnpm de
 ### 2. Conectar la app
 Abre el cliente web o la app Android → **Ajustes** → escribe la URL del servidor y el token. En el celular usa la dirección de tu equipo en la red local (`http://192.168.x.x:8787`). Por internet pon el servidor detrás de HTTPS (Caddy, nginx, Cloudflare Tunnel): el token viaja en una cabecera.
 
-**Emparejar con QR:** al arrancar, el servidor imprime un QR en la terminal. Escanéalo con la cámara del teléfono: la app se abre y te pide confirmar. En Docker define `PUBLIC_URL=http://<ip-de-tu-red>:8787` para que el QR tenga la dirección correcta (`docker compose logs feelingmark` lo muestra).
+**Emparejar con QR:** abre la app y toca **Escanear QR**. El servidor imprime un QR al arrancar (`docker compose logs feelingmark` en Docker) y puedes mostrar uno nuevo cuando quieras en `http://<tu-equipo>:8787/pair` (escribe allí tu `AUTH_TOKEN`). El QR lleva un código de un solo uso que caduca a los 15 minutos, nunca tu token. `/pair` usa la dirección con la que lo abres, así que funciona en Docker sin más; para el QR de los logs define `PUBLIC_URL=http://<ip-de-tu-red>:8787`.
 
 ### 3. App Android
 Descarga el APK firmado desde [Releases](https://github.com/Pedroj-64/feelingmark/releases), o compílalo: `cd apps/mobile && npx expo prebuild --platform android && cd android && ./gradlew assembleRelease` (JDK 21 + Android SDK).

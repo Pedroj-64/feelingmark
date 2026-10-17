@@ -4,13 +4,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-16
+
 ### Added
+- Escáner de QR en la app («Escanear QR»): primer uso, Ajustes y permiso de cámara solo para eso.
+- Emparejamiento más seguro: el QR lleva un código de un solo uso que caduca a los 15 minutos, no el token permanente (los QR antiguos siguen funcionando).
+- Página `/pair` del servidor: muestra un QR nuevo al escribir el `AUTH_TOKEN`, con la dirección con la que se abrió (resuelve la IP equivocada dentro de Docker); aviso en los logs si falta `PUBLIC_URL`.
+- CI construye la imagen Docker para amd64 y arm64 en cada cambio, sin publicarla.
+- Títulos en Fraunces (el diseño lo pedía) y logo en Ajustes.
+- Prueba de extremo a extremo del servidor real (subir, calendario, reinicio, borrar) que corre en CI, y Dependabot semanal para npm, Actions y Docker.
 - Videos: se pueden subir e importar (mp4, mov, webm, 3gp); fecha desde los metadatos, portada generada con ffmpeg y reproducción con avance libre (Range) en el servidor.
 - Reproducción de videos en la app (enlaces firmados de 10 minutos, sin exponer el token); insignia ▶ en el calendario.
 - Importador de carpetas (`node src/import.ts <carpeta>`): simula por defecto, informa de dónde sale cada fecha y avisa si todo cae en un solo día; `--apply` guarda y es repetible.
 - Guía de uso personal con servidor privado e importación desde el teléfono con `adb`.
+- Borrar fotos y videos: `DELETE /photos/:id` elimina la entrada, el original y las miniaturas (S3/R2, Drive y disco); en la app, botón «Borrar» con confirmación en la vista de día.
+- Tope de tamaño por subida (`MAX_UPLOAD_MB`, 200 por defecto): responde 413 sin leer el archivo.
+- Imagen Docker multi-arquitectura (amd64 y arm64), para Raspberry Pi.
+- Ajustes: botón «Probar conexión» y versión de la app.
 
 ### Fixed
+- Las fotos verticales ya no se recortan en la vista de día; el calendario tiene margen de 16 px; los bordes de los campos cumplen el contraste de componentes (3:1).
+- Tras borrar o mover una foto abierta directamente (web), la app vuelve al calendario.
 - El día del calendario ya no depende de la zona horaria del servidor: se guarda la hora de reloj de la cámara (antes una foto de la noche podía caer en el día siguiente).
 
 ### Added

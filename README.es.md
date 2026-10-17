@@ -7,6 +7,12 @@
   <img src="docs/media/demo-es.gif" alt="Recorrido de Feelingmark: calendario, vista de día y añadir fotos" width="300">
 </div>
 
+<p align="center">
+  <img src="docs/media/android-calendar.png" alt="Calendario en Android, con miniaturas e insignia de video" width="220">
+  <img src="docs/media/android-day.png" alt="Vista de día con nota y fotos en su proporción real" width="220">
+  <img src="docs/media/android-settings.png" alt="Ajustes: escanear el QR de emparejamiento y probar la conexión" width="220">
+</p>
+
 **Un álbum-calendario de fotos y recuerdos que tú alojas.** Pones tu almacenamiento; Feelingmark pone el orden: un calendario, un día a la vez.
 
 Nace como alternativa abierta para quienes usaban apps como Dots Memories y no quieren que sus recuerdos queden atados a la suscripción de otro. La app móvil (Android/iOS) y el cliente web comparten el mismo código.
@@ -25,7 +31,7 @@ Nace como alternativa abierta para quienes usaban apps como Dots Memories y no q
 - **Resumen en video del mes** con fundidos suaves y música opcional (ffmpeg, servidores Docker/Node).
 - **Subidas fiables:** las fotos entran en una cola con reintentos; lo que falla (sin red) se sube solo la próxima vez que abras la app.
 - **Funciona sin conexión:** el calendario muestra lo último visto de cada mes y las miniaturas que ya viste si el servidor no responde.
-- Empareja el teléfono escaneando el QR que imprime el servidor al arrancar.
+- Empareja el teléfono escaneando un QR (código de un solo uso que caduca; se muestra al arrancar y en `/pair`).
 - Modo claro/oscuro, español e inglés (se aceptan más idiomas).
 - Almacenamiento en disco local o en cualquier servicio compatible con S3 (Cloudflare R2, Backblaze B2, MinIO).
 
