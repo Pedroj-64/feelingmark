@@ -93,7 +93,15 @@ export default function Day() {
                 <MoveRow date={date} onMove={(d) => api.move(id, d).then(leave)} />
                 <DeleteButton
                   label={t("a11y.deleteItem", { index: i + 1, total: photos.length })}
-                  onConfirmed={() => api.remove(id).then(leave)}
+                  onConfirmed={() =>
+                    api.remove(id).then((orphaned) => {
+                      if (orphaned) {
+                        if (Platform.OS === "web") window.alert(t("day.orphaned"));
+                        else Alert.alert(t("day.orphaned"));
+                      }
+                      leave();
+                    })
+                  }
                 />
               </View>
             ))}

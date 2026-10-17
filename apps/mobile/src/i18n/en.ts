@@ -50,6 +50,7 @@ export default {
     deleteTitle: "Delete this file?",
     deleteBody: "It will be removed from your server for good. This cannot be undone.",
     cancel: "Cancel",
+    orphaned: "Removed from the calendar, but the file could not be deleted from storage. Check your server.",
   },
   settings: {
     title: "Connect your server",

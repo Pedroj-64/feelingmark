@@ -51,6 +51,7 @@ const es: typeof en = {
     delete: "Borrar",
     deleteTitle: "¿Borrar este archivo?",
     deleteBody: "Se eliminará de tu servidor para siempre. No se puede deshacer.",
+    orphaned: "Se quitó del calendario, pero el archivo no se pudo borrar del almacenamiento. Revisa tu servidor.",
     cancel: "Cancelar",
   },
   settings: {

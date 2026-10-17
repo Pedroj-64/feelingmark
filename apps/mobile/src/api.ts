@@ -60,9 +60,12 @@ export function createApi({ url, token }: Conn) {
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
     },
-    async remove(id: number) {
+    /** Devuelve cuántos archivos no se pudieron quitar del almacenamiento (el registro sí se borró). */
+    async remove(id: number): Promise<number> {
       const r = await fetch(`${url}/photos/${id}`, { method: "DELETE", headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const body = (await r.json().catch(() => ({}))) as { orphaned?: number };
+      return typeof body.orphaned === "number" ? body.orphaned : 0;
     },
     async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File; takenAt?: string }) {
       const form = new FormData();
