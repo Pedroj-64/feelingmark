@@ -23,10 +23,10 @@ Feelingmark is not on any app store; install the signed APK from [Releases](http
 
 | File | For |
 |---|---|
-| `…-arm64-v8a.apk` (~40 MB) | nearly every phone from 2017 on |
-| `…-armeabi-v7a.apk` (~40 MB) | old or very cheap 32-bit phones |
-| `…-x86_64.apk` (~40 MB) | emulators and some Chromebooks |
-| `…-universal.apk` (~122 MB) | not sure? this works everywhere |
+| `…-arm64-v8a.apk` (~50 MB) | nearly every phone from 2017 on |
+| `…-armeabi-v7a.apk` (~50 MB) | old or very cheap 32-bit phones |
+| `…-x86_64.apk` (~50 MB) | emulators and some Chromebooks |
+| `…-universal.apk` (~116 MB) | not sure? this works everywhere |
 
 1. Open the downloaded file. Android will ask to allow installs from your browser or file manager ("unknown sources"): allow it only for that app. It is needed because the app is not distributed through a store.
 2. Optional check: `sha256sum -c SHA256SUMS.txt --ignore-missing` against the checksums file of the same release.
@@ -63,10 +63,10 @@ Feelingmark no está en ninguna tienda; instala el APK firmado desde [Releases](
 
 | Archivo | Para |
 |---|---|
-| `…-arm64-v8a.apk` (~40 MB) | casi cualquier teléfono desde 2017 |
-| `…-armeabi-v7a.apk` (~40 MB) | teléfonos viejos o muy baratos de 32 bits |
-| `…-x86_64.apk` (~40 MB) | emuladores y algunos Chromebooks |
-| `…-universal.apk` (~122 MB) | ¿no sabes cuál? este sirve en todos |
+| `…-arm64-v8a.apk` (~50 MB) | casi cualquier teléfono desde 2017 |
+| `…-armeabi-v7a.apk` (~50 MB) | teléfonos viejos o muy baratos de 32 bits |
+| `…-x86_64.apk` (~50 MB) | emuladores y algunos Chromebooks |
+| `…-universal.apk` (~116 MB) | ¿no sabes cuál? este sirve en todos |
 
 1. Abre el archivo descargado. Android pedirá permitir instalar desde tu navegador o gestor de archivos («orígenes desconocidos»): permítelo solo para esa app. Hace falta porque la app no se distribuye por una tienda.
 2. Verificación opcional: `sha256sum -c SHA256SUMS.txt --ignore-missing` con el archivo de sumas del mismo release.

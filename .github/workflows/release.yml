@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           export FEELINGMARK_KEYSTORE="$RUNNER_TEMP/release.jks"
-          # un APK por arquitectura (~40 MB) y uno universal (~122 MB) para quien no sepa cuál elegir
+          # un APK por arquitectura (~50 MB) y uno universal (~116 MB) para quien no sepa cuál elegir
           for abi in arm64-v8a armeabi-v7a x86_64 universal; do
             if [ "$abi" = universal ]; then arch=arm64-v8a,armeabi-v7a,x86,x86_64; else arch=$abi; fi
             ./gradlew clean assembleRelease --no-daemon -PreactNativeArchitectures=$arch # clean: que no arrastre librerías de otra arquitectura
