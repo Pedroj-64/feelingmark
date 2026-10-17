@@ -2,7 +2,7 @@
   "expo": {
     "name": "Feelingmark",
     "slug": "feelingmark",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -19,7 +19,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "dev.feelingmark.app",
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -39,7 +39,8 @@
         }
       ],
       "./plugins/withReleaseSigning",
-      "expo-video"
+      "expo-video",
+      ["expo-camera", { "cameraPermission": "Feelingmark usa la cámara solo para leer el QR de tu servidor. / Feelingmark uses the camera only to read your server's QR.", "recordAudioAndroid": false }]
     ],
     "scheme": "feelingmark"
   }

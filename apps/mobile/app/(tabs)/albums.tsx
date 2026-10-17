@@ -81,7 +81,7 @@ export default function Albums() {
 
 const s = StyleSheet.create({
   root: { flex: 1 },
-  title: { fontSize: 28, fontWeight: "600", letterSpacing: -0.5, marginTop: 16, marginBottom: 16 },
+  title: { fontSize: 28, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.5, marginTop: 16, marginBottom: 16 },
   cover: { borderRadius: 16, overflow: "hidden" },
   name: { fontSize: 16, fontWeight: "600", marginTop: 8 },
 });

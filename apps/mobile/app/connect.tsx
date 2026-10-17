@@ -1,17 +1,20 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { redeem } from "../src/pair";
 import { saveConn } from "../src/settings";
 import { useTheme } from "../src/theme";
 
 /** Destino del QR de emparejamiento (feelingmark://connect?u=...&t=...). Pide confirmar: un QR ajeno podría apuntar a otro servidor. */
 export default function Connect() {
-  const { u, t: token } = useLocalSearchParams<{ u?: string; t?: string }>();
+  const { u, t: token, c: code } = useLocalSearchParams<{ u?: string; t?: string; c?: string }>();
+  const [failed, setFailed] = useState(false);
   const { t } = useTranslation();
   const c = useTheme();
   const router = useRouter();
-  const valid = typeof u === "string" && /^https?:\/\/[^\s/]+/i.test(u) && typeof token === "string" && token.length > 0;
+  const valid = typeof u === "string" && /^https?:\/\/[^\s/]+/i.test(u) && (Boolean(token) || Boolean(code));
 
   return (
     <SafeAreaView style={[s.root, { backgroundColor: c.bg }]}>
@@ -26,13 +29,18 @@ export default function Connect() {
             <Pressable
               accessibilityRole="button"
               onPress={async () => {
-                await saveConn({ url: u, token });
-                router.replace("/");
+                try {
+                  await saveConn({ url: u, token: token || (await redeem(u, String(code))) });
+                  router.replace("/");
+                } catch {
+                  setFailed(true); // código usado o caducado, o el servidor no responde
+                }
               }}
               style={({ pressed }) => [s.btn, { backgroundColor: c.accent, transform: [{ translateY: pressed ? 1 : 0 }] }]}
             >
               <Text style={{ color: c.onAccent, fontWeight: "600" }}>{t("connect.action")}</Text>
             </Pressable>
+            {failed && <Text style={{ color: c.accent, marginTop: 12 }}>{t("connect.expired")}</Text>}
           </>
         ) : (
           <Text style={{ color: c.muted }}>{t("connect.invalid")}</Text>
@@ -48,7 +56,7 @@ export default function Connect() {
 const s = StyleSheet.create({
   root: { flex: 1 },
   body: { padding: 16, width: "100%", maxWidth: 520, alignSelf: "center" },
-  title: { fontSize: 28, fontWeight: "600", letterSpacing: -0.5, marginTop: 24, marginBottom: 12 },
+  title: { fontSize: 28, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.5, marginTop: 24, marginBottom: 12 },
   url: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 16, overflow: "hidden" },
   btn: { marginTop: 24, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
   cancel: { minHeight: 48, alignItems: "center", justifyContent: "center", marginTop: 8 },

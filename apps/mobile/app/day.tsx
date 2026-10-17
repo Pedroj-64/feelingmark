@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api } from "../src/api";
@@ -20,6 +20,7 @@ export default function Day() {
   const c = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const leave = () => (router.canGoBack() ? router.back() : router.replace("/")); // al abrir la vista de día directamente (web) no hay historial
   const [api, setApi] = useState<Api | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteErr, setNoteErr] = useState(false);
@@ -77,7 +78,7 @@ export default function Day() {
           placeholderTextColor={c.muted}
           multiline
           maxLength={5000}
-          style={[s.note, { color: c.ink, borderColor: noteErr ? c.accent : c.line, backgroundColor: c.surface }]}
+          style={[s.note, { color: c.ink, borderColor: noteErr ? c.accent : c.muted, backgroundColor: c.surface }]}
         />
         {noteErr && <Text style={{ color: c.accent, marginBottom: 12 }}>{t("common.error")}</Text>}
         <View style={{ gap: 20 }}>
@@ -87,15 +88,13 @@ export default function Day() {
                 {videoSet.has(id) ? (
                   <VideoItem api={api} id={id} width={w} label={t("a11y.videoOf", { index: i + 1, total: photos.length })} />
                 ) : (
-                  <Image
-                    source={api.fileSource(id)}
-                    style={{ width: w, height: w * 0.75, borderRadius: 16, backgroundColor: c.surface }}
-                    contentFit="cover"
-                    cachePolicy="disk"
-                    accessibilityLabel={t("a11y.photoOf", { index: i + 1, total: photos.length })}
-                  />
+                  <Photo api={api} id={id} width={w} label={t("a11y.photoOf", { index: i + 1, total: photos.length })} />
                 )}
-                <MoveRow date={date} onMove={(d) => api.move(id, d).then(() => router.back())} />
+                <MoveRow date={date} onMove={(d) => api.move(id, d).then(leave)} />
+                <DeleteButton
+                  label={t("a11y.deleteItem", { index: i + 1, total: photos.length })}
+                  onConfirmed={() => api.remove(id).then(leave)}
+                />
               </View>
             ))}
         </View>
@@ -108,9 +107,10 @@ const s = StyleSheet.create({
   note: { borderWidth: 1, borderRadius: 14, padding: 14, minHeight: 88, fontSize: 16, marginBottom: 20, textAlignVertical: "top" },
   input: { flex: 1, minWidth: 0, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
   moveBtn: { borderWidth: 1, borderRadius: 14, minHeight: 48, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
+  deleteBtn: { minHeight: 44, justifyContent: "center" },
   root: { flex: 1 },
   back: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
-  title: { fontSize: 26, fontWeight: "600", letterSpacing: -0.5, marginVertical: 12 },
+  title: { fontSize: 26, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.5, marginVertical: 12 },
 });
 
 /** Reproductor de un video del día. La URL firmada se pide al montar; caduca a los 10 min (basta para ver el clip). */
@@ -143,7 +143,7 @@ function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promis
           onChangeText={setV}
           autoCapitalize="none"
           accessibilityLabel={t("a11y.dateField")}
-          style={[s.input, { color: c.ink, borderColor: c.line, backgroundColor: c.surface }]}
+          style={[s.input, { color: c.ink, borderColor: c.muted, backgroundColor: c.surface }]}
         />
         <Pressable
           accessibilityRole="button"
@@ -155,5 +155,47 @@ function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promis
       </View>
       {msg !== "" && <Text style={{ color: c.muted, marginTop: 4 }}>{msg}</Text>}
     </View>
+  );
+}
+
+/** Borrar es irreversible: pide confirmar (Alert en nativo, window.confirm en web, donde Alert no hace nada). */
+function DeleteButton({ label, onConfirmed }: { label: string; onConfirmed: () => Promise<void> }) {
+  const { t } = useTranslation();
+  const c = useTheme();
+  const [failed, setFailed] = useState(false);
+  const run = () => onConfirmed().catch(() => setFailed(true));
+  const ask = () => {
+    if (Platform.OS === "web") {
+      if (window.confirm(`${t("day.deleteTitle")}\n${t("day.deleteBody")}`)) void run();
+      return;
+    }
+    Alert.alert(t("day.deleteTitle"), t("day.deleteBody"), [
+      { text: t("day.cancel"), style: "cancel" },
+      { text: t("day.delete"), style: "destructive", onPress: () => void run() },
+    ]);
+  };
+  return (
+    <View style={{ alignItems: "flex-start" }}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={ask} hitSlop={8} style={s.deleteBtn}>
+        <Text style={{ color: c.accent, fontWeight: "600" }}>{t("day.delete")}</Text>
+      </Pressable>
+      {failed && <Text style={{ color: c.muted }}>{t("common.error")}</Text>}
+    </View>
+  );
+}
+
+/** Foto a su proporción real (vertical u horizontal); 4:3 mientras carga. */
+function Photo({ api, id, width, label }: { api: Api; id: number; width: number; label: string }) {
+  const c = useTheme();
+  const [ratio, setRatio] = useState(4 / 3);
+  return (
+    <Image
+      source={api.fileSource(id)}
+      style={{ width, aspectRatio: ratio, borderRadius: 16, backgroundColor: c.surface }}
+      contentFit="cover"
+      cachePolicy="disk"
+      accessibilityLabel={label}
+      onLoad={(e) => e.source.width > 0 && e.source.height > 0 && setRatio(Math.min(2.5, Math.max(0.4, e.source.width / e.source.height)))}
+    />
   );
 }

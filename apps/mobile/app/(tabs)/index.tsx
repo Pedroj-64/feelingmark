@@ -50,7 +50,7 @@ export default function CalendarScreen() {
     [t],
   );
 
-  const cell = Math.min(width, 720) / 7;
+  const cell = (Math.min(width, 720) - 32) / 7; // 16 px de margen a cada lado
   const dayLabel = (d: string, photos: number, hasNote: boolean, hasVideo: boolean) =>
     [
       new Date(`${d}T12:00:00`).toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long" }),
@@ -224,6 +224,7 @@ export default function CalendarScreen() {
             {status}
           </Text>
         )}
+        {!api && Platform.OS !== "web" && <ScanButton />}
         <Pressable
           disabled={!api}
           accessibilityRole="button"
@@ -266,8 +267,8 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 20 },
   nav: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "600", letterSpacing: -0.4 },
-  row: { flexDirection: "row" },
+  title: { fontSize: 24, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.4 },
+  row: { flexDirection: "row", paddingHorizontal: 16 },
   wd: { textAlign: "center", fontSize: 12, paddingBottom: 6 },
   cell: { flex: 1, borderRadius: 12, borderWidth: 1.5, overflow: "hidden", padding: 5 },
   num: { fontSize: 12, fontVariant: ["tabular-nums"], textShadowColor: "rgba(0,0,0,0.45)", textShadowRadius: 3 },
@@ -288,3 +289,19 @@ const s = StyleSheet.create({
   msg: { textAlign: "center", marginTop: 20, paddingHorizontal: 16 },
   btn: { margin: 16, marginTop: 24, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
 });
+
+/** Primer uso: sin servidor conectado, lo primero que se ofrece es escanear su QR. */
+function ScanButton() {
+  const { t } = useTranslation();
+  const c = useTheme();
+  const router = useRouter();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push("/scan")}
+      style={({ pressed }) => [s.btn, { backgroundColor: c.accent, marginBottom: 12, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+    >
+      <Text style={{ color: c.onAccent, fontWeight: "600" }}>{t("scan.action")}</Text>
+    </Pressable>
+  );
+}

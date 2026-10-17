@@ -60,6 +60,10 @@ export function createApi({ url, token }: Conn) {
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
     },
+    async remove(id: number) {
+      const r = await fetch(`${url}/photos/${id}`, { method: "DELETE", headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
     async upload(asset: { uri: string; mimeType?: string; fileName?: string | null; file?: File; takenAt?: string }) {
       const form = new FormData();
       const type = asset.mimeType ?? "image/jpeg";
