@@ -19,6 +19,7 @@ const DB = {
 const objects = new Map<string, Uint8Array>();
 const BUCKET = {
   put: async (k: string, v: Uint8Array) => void objects.set(k, v),
+  delete: async (k: string) => void objects.delete(k),
   get: async (k: string) => (objects.has(k) ? { arrayBuffer: async () => objects.get(k)!.slice().buffer as ArrayBuffer } : null),
 };
 const env = { DB, BUCKET, AUTH_TOKEN: "t" };

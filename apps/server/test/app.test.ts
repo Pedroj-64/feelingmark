@@ -16,6 +16,7 @@ const storage: StorageAdapter = {
     if (!v) throw new Error("gone");
     return v;
   },
+  delete: async (k) => void mem.delete(k),
 };
 const app = createApp({ db: await openDb(":memory:"), storage, token: "secret", thumbnail, slideshow: buildSlideshow });
 const auth = { authorization: "Bearer secret" };
@@ -194,4 +195,35 @@ test("álbumes: un álbum por mes, el más reciente primero, con conteo y portad
   const febIds = Object.values((await (await app.request("/photos?month=2030-02", { headers: auth })).json()).days).flat() as number[];
   assert.ok(febIds.includes(feb.cover));
   assert.equal((await app.request("/albums")).status, 401);
+});
+
+test("DELETE borra la foto, sus archivos y permite volver a subirla", async () => {
+  const png = new Uint8Array(
+    await sharp({ create: { width: 8, height: 8, channels: 3, background: "#c33" } })
+      .png()
+      .toBuffer(),
+  );
+  const { id } = await (await upload(png, { takenAt: "2023-05-05T00:00:00Z" })).json();
+  await app.request(`/photos/${id}/thumb`, { headers: auth }); // genera la miniatura en el almacenamiento
+  const before = [...mem.keys()].filter((k) => k.includes("2023-05") || k.startsWith("thumbs/")).length;
+  assert.ok(before >= 2);
+  assert.equal((await app.request(`/photos/${id}`, { method: "DELETE" })).status, 401);
+  assert.equal((await app.request(`/photos/${id}`, { method: "DELETE", headers: auth })).status, 200);
+  assert.equal((await app.request(`/photos/${id}/file`, { headers: auth })).status, 404);
+  assert.equal((await app.request(`/photos/${id}`, { method: "DELETE", headers: auth })).status, 404);
+  const month = await (await app.request("/photos?month=2023-05", { headers: auth })).json();
+  assert.deepEqual(month.days, {});
+  assert.ok(![...mem.keys()].some((k) => k.startsWith("2023-05/")));
+  assert.equal((await upload(png, { takenAt: "2023-05-05T00:00:00Z" })).status, 201); // ya no cuenta como duplicado
+});
+
+test("una subida por encima del tope responde 413 y una dentro del tope sigue funcionando", async () => {
+  const small = createApp({ db: await openDb(":memory:"), storage, token: "secret", maxUploadBytes: 1000 });
+  const send = (n: number) => {
+    const f = new FormData();
+    f.set("file", new File([new Uint8Array(n).fill(7)], "a.jpg", { type: "image/jpeg" }));
+    return small.request("/photos", { method: "POST", body: f, headers: auth });
+  };
+  assert.equal((await send(5000)).status, 413);
+  assert.equal((await send(200)).status, 201);
 });

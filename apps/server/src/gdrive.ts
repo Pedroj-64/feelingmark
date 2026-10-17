@@ -158,5 +158,13 @@ export function gdriveStorage(
       if (!r.ok) throw new Error(`gdrive get ${key}: HTTP ${r.status}`);
       return new Uint8Array(await r.arrayBuffer());
     },
+    async delete(key) {
+      const name = fileName(key);
+      const id = await findId(name);
+      if (!id) return;
+      const r = await call(`${ep.api}/files/${id}`, { method: "DELETE" });
+      if (!r.ok && r.status !== 404) throw new Error(`gdrive delete ${key}: HTTP ${r.status}`);
+      ids.delete(name);
+    },
   };
 }

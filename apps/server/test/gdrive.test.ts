@@ -61,6 +61,7 @@ async function fakeGoogle() {
     }
     const id = url.pathname.split("/").pop()!;
     const f = files.find((x) => x.id === id);
+    if (req.method === "DELETE" && f) return (files.splice(files.indexOf(f), 1), res.writeHead(204).end());
     if (req.method === "PATCH" && f) return ((f.data = body), send({ id }));
     if (req.method === "GET" && f && url.searchParams.get("alt") === "media") return res.end(f.data);
     send({}, 404);
@@ -83,6 +84,10 @@ test("Drive: carpeta única, crear, leer y sobrescribir; el token se reutiliza",
   assert.equal(g.files.filter((f) => !f.folder).length, 2);
   assert.ok(g.files.some((f) => f.name === "2024-01__a b'c.jpg"));
   assert.equal(g.stats.tokens, 1);
+  await drive.delete("thumbs/x.webp");
+  await drive.delete("thumbs/x.webp"); // ya no existe: no es un error
+  assert.equal(g.files.filter((f) => !f.folder).length, 1);
+  await assert.rejects(drive.get("thumbs/x.webp"));
   await assert.rejects(drive.get("no-existe"));
   g.srv.close();
 });

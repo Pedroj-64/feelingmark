@@ -16,7 +16,11 @@ const skip = !hasFfmpeg && "ffmpeg/ffprobe no instalados";
 const mem = new Map<string, Uint8Array>();
 const app = createApp({
   db: await openDb(":memory:"),
-  storage: { put: async (k, d) => void mem.set(k, d), get: async (k) => mem.get(k) ?? Promise.reject(new Error("gone")) },
+  storage: {
+    put: async (k, d) => void mem.set(k, d),
+    get: async (k) => mem.get(k) ?? Promise.reject(new Error("gone")),
+    delete: async (k) => void mem.delete(k),
+  },
   token: "t",
   thumbnail,
   videoDate,
@@ -103,7 +107,7 @@ test("el resumen en video del mes ignora los videos y usa solo las fotos", { ski
 test("un video sin ffmpeg ni portada responde 404 en la miniatura, no un 503", async () => {
   const bare = createApp({
     db: await openDb(":memory:"),
-    storage: { put: async (k, d) => void mem.set(k, d), get: async (k) => mem.get(k)! },
+    storage: { put: async (k, d) => void mem.set(k, d), get: async (k) => mem.get(k)!, delete: async (k) => void mem.delete(k) },
     token: "t",
   });
   const f = new FormData();

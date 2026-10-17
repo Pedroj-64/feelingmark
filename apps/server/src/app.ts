@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { MEDIA_EXT, digest, hex, ingest, isVideo } from "./ingest.ts";
 import type { Db } from "./db.ts";
@@ -14,7 +15,7 @@ const hmac = async (key: string, msg: string) => {
 };
 const LINK_TTL_MS = 10 * 60_000;
 const randomId = () => hex(crypto.getRandomValues(new Uint8Array(12)));
-function safeEqual(a: string, b: string) {
+export function safeEqual(a: string, b: string) {
   const x = new TextEncoder().encode(a);
   const y = new TextEncoder().encode(b);
   let d = x.length ^ y.length;
@@ -35,14 +36,18 @@ export type Capabilities = {
 
 type Asset = { data: Uint8Array; mime: string };
 
-export function createApp(opts: { db: Db; storage: StorageAdapter; token: string } & Capabilities) {
+export const DEFAULT_MAX_UPLOAD = 200 * 1024 * 1024;
+
+export function createApp(opts: { db: Db; storage: StorageAdapter; token: string; maxUploadBytes?: number } & Capabilities) {
   const { db, storage, token } = opts;
   const app = new Hono();
   app.use("*", cors()); // el cliente web puede vivir en otro origen; el acceso lo protege el token
   const auth = bearerAuth({ token, verifyToken: (t) => safeEqual(t, token) });
   for (const p of ["/photos", "/photos/*", "/days/*", "/albums", "/albums/*", "/shares/*"]) app.use(p, auth); // la web estática queda fuera del token
 
-  app.post("/photos", async (c) => {
+  // Tope por subida (el archivo se carga entero en memoria): 413 sin leer el cuerpo si Content-Length ya lo supera.
+  const limit = bodyLimit({ maxSize: opts.maxUploadBytes ?? DEFAULT_MAX_UPLOAD, onError: (c) => c.json({ error: "file too large" }, 413) });
+  app.post("/photos", limit, async (c) => {
     const form = await c.req.parseBody();
     const file = form.file;
     if (!(file instanceof File) || !MEDIA_EXT[file.type])
@@ -270,6 +275,18 @@ export function createApp(opts: { db: Db; storage: StorageAdapter; token: string
     "/s/:id/video",
     shared((_, m) => videoOf(m)),
   );
+
+  // Borra la foto o el video: la fila primero (deja de verse al instante) y luego los archivos.
+  // Si el almacenamiento falla quedan bytes huérfanos, pero la entrada ya no existe; mejor eso que dejarla a medias.
+  app.delete("/photos/:id", async (c) => {
+    const id = Number(c.req.param("id"));
+    const row = await db.get("SELECT key, hash FROM photos WHERE id = ?", id);
+    if (!row) return c.json({ error: "not found" }, 404);
+    await db.run("DELETE FROM photos WHERE id = ?", id);
+    const keys = [String(row.key), ...["client", "webp", "poster"].map((x) => `thumbs/${row.hash}.${x}`)];
+    const failed = (await Promise.allSettled(keys.map((k) => storage.delete(k)))).filter((r) => r.status === "rejected").length;
+    return c.json({ ok: true, ...(failed && { orphaned: failed }) });
+  });
 
   app.patch("/photos/:id", async (c) => {
     const { takenAt: t } = await c.req.json<{ takenAt?: string }>().catch(() => ({}) as { takenAt?: string });

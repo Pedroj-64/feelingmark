@@ -70,7 +70,12 @@ async function fixture() {
 }
 const memStorage = () => {
   const m = new Map<string, Uint8Array>();
-  return { m, put: async (k: string, d: Uint8Array) => void m.set(k, d), get: async (k: string) => m.get(k)! };
+  return {
+    m,
+    put: async (k: string, d: Uint8Array) => void m.set(k, d),
+    get: async (k: string) => m.get(k)!,
+    delete: async (k: string) => void m.delete(k),
+  };
 };
 
 test("simulación: informa sin escribir nada, con la fuente de cada fecha", async () => {

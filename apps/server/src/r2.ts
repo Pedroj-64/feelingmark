@@ -4,6 +4,7 @@ import type { StorageAdapter } from "./storage.ts";
 interface R2 {
   put(key: string, value: Uint8Array): Promise<unknown>;
   get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer> } | null>;
+  delete(key: string): Promise<void>;
 }
 
 export function r2Storage(bucket: R2): StorageAdapter {
@@ -16,5 +17,6 @@ export function r2Storage(bucket: R2): StorageAdapter {
       if (!obj) throw new Error(`R2 object not found: ${key}`);
       return new Uint8Array(await obj.arrayBuffer());
     },
+    delete: (key) => bucket.delete(key),
   };
 }

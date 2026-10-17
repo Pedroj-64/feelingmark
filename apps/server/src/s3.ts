@@ -22,5 +22,9 @@ export function s3StorageAdapter(cfg: S3Config): StorageAdapter {
       if (!r.ok) throw new Error(`S3 get ${key}: HTTP ${r.status}`);
       return new Uint8Array(await r.arrayBuffer());
     },
+    async delete(key) {
+      const r = await client.fetch(url(key), { method: "DELETE" });
+      if (!r.ok && r.status !== 404) throw new Error(`S3 delete ${key}: HTTP ${r.status}`);
+    },
   };
 }

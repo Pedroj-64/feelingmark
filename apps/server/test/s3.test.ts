@@ -12,7 +12,10 @@ test("S3: put/get firmados contra un servidor falso, claves con carpetas", async
     seen.push(req.headers.authorization);
     const chunks: Buffer[] = [];
     for await (const c of req) chunks.push(c as Buffer);
-    if (req.method === "PUT") {
+    if (req.method === "DELETE") {
+      res.statusCode = objects.delete(req.url!) ? 204 : 404;
+      res.end();
+    } else if (req.method === "PUT") {
       objects.set(req.url!, Buffer.concat(chunks));
       res.end();
     } else if (objects.has(req.url!)) res.end(objects.get(req.url!));
@@ -32,6 +35,9 @@ test("S3: put/get firmados contra un servidor falso, claves con carpetas", async
   assert.deepEqual([...(await s3.get("2024-01/abc.jpg"))], [1, 2, 3]);
   assert.ok(objects.has("/b/2024-01/abc.jpg"));
   assert.ok(seen.every((a) => a?.startsWith("AWS4-HMAC-SHA256")));
+  await s3.delete("2024-01/abc.jpg");
+  await s3.delete("2024-01/abc.jpg"); // ya no existe: no es un error
+  assert.ok(!objects.has("/b/2024-01/abc.jpg"));
   await assert.rejects(s3.get("nope"));
   srv.close();
 });

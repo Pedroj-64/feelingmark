@@ -16,7 +16,11 @@ test("toda ruta de la API está en run_worker_first de wrangler.jsonc", async ()
   // "/x/*" cubre lo que empieza por "/x/" pero NO "/x" a secas (así lo trata Cloudflare); "/x" cubre solo "/x".
   const covered = (path: string) => patterns.some((p) => (p.endsWith("/*") ? path.startsWith(p.slice(0, -1)) : path === p));
 
-  const app = createApp({ db: await openDb(":memory:"), storage: { put: async () => {}, get: async () => new Uint8Array() }, token: "t" });
+  const app = createApp({
+    db: await openDb(":memory:"),
+    storage: { put: async () => {}, get: async () => new Uint8Array(), delete: async () => {} },
+    token: "t",
+  });
   const routes = [...new Set(app.routes.map((r) => r.path))].filter((p) => p !== "/*" && !p.endsWith("/*"));
   assert.ok(routes.length > 8, "no se detectaron las rutas");
   assert.deepEqual(
