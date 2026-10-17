@@ -20,11 +20,13 @@ Legend / Leyenda: **Effort / Esfuerzo** S·M·L
 | #8 Logo en el estado vacío y un momento de bienvenida (ya está en Ajustes). | S |
 | #9 Movimiento (cambio de mes, abrir un día) con alternativa para "reducir movimiento". | M |
 | #11 Mosaico asimétrico en la vista de día. | M |
-| #13 Álbumes sin conexión y agrupados por año. | M |
+| #13 Álbumes sin conexión. | M |
 | #10 Vista de dos paneles (calendario + día) en pantallas anchas. | L |
 | Selección múltiple y borrado en bloque; papelera con deshacer (hoy borrar es definitivo). | M |
 
 ### 3. Servidor y seguridad
+- **Invitados que suben fotos** al álbum compartido (hoy solo ven y descargan): pide identidades de invitado y permisos de escritura.
+- **ZIP64**: el .zip del álbum no pasa de 4 GB en total.
 - **Los códigos de emparejamiento viven en memoria**: se pierden al reiniciar (el QR del arranque se vuelve a imprimir). Persistirlos solo si hace falta.
 - **Las subidas se cargan enteras en memoria** (el tope `MAX_UPLOAD_MB` protege, pero no es streaming). Subida en trozos o en streaming para videos muy grandes.
 - **Despliegue en Cloudflare Workers**: no incluye `/pair` (los códigos en memoria no sirven en Workers) y tiene su propio límite de subida. Allí se conecta escribiendo URL y token.
@@ -61,11 +63,13 @@ Subidas en segundo plano a nivel del sistema operativo (hoy se retoman al abrir 
 | #8 Logo in the empty state and a welcome moment (already in Settings). | S |
 | #9 Motion (month change, opening a day) with a reduced-motion fallback. | M |
 | #11 Asymmetric masonry in the day view. | M |
-| #13 Albums offline and grouped by year. | M |
+| #13 Albums offline. | M |
 | #10 Two-pane layout (calendar + day) on wide screens. | L |
 | Multi-select and bulk delete; trash with undo (today deletion is permanent). | M |
 
 ### 3. Server and security
+- **Guests who add photos** to a shared album (today they only view and download): needs guest identities and write permissions.
+- **ZIP64**: the album .zip is limited to 4 GB in total.
 - **Pairing codes live in memory**: lost on restart (the startup QR is printed again). Persist only if needed.
 - **Uploads are loaded whole into memory** (`MAX_UPLOAD_MB` protects, but it is not streaming). Chunked or streamed upload for very large videos.
 - **Cloudflare Workers deployment**: no `/pair` (in-memory codes do not work on Workers) and its own upload limit. Connect there by typing URL and token.

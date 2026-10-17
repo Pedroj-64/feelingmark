@@ -8,13 +8,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - `/pair` y `/pair/redeem` limitan intentos fallidos (10 por minuto, responde 429).
 - La app avisa cuando un archivo borrado no se pudo quitar del almacenamiento.
 - Guía `docs/exposing.md`: Tailscale, Cloudflare Tunnel y Caddy para usar el servidor fuera de casa.
-
 - Inicio guiado: según el momento te lleva a conectar el servidor o a añadir tu primer recuerdo; ya en uso muestra hoy, «un día como hoy» (`/memories` en el servidor) y el resumen del mes.
 - Videos desde el teléfono (antes solo fotos) y «Importar un álbum» de la galería: lo ya importado no se repite.
 - Resumen mensual en video dentro de la app (reproductor propio).
 - Búsqueda en las notas de los días (`/search`).
 - Selector de fecha nativo para mover un archivo de día.
 - Álbumes agrupados por año; iconos en las pestañas; esqueletos de carga; fuente Geist en el cuerpo.
+- Pestaña Galería: toda la biblioteca en una cuadrícula continua por meses, cargada por páginas (`/timeline`).
+- Aviso flotante de subida en todas las pantallas («Preparando…», «Subiendo 3 de 12», resultado).
+- Añadir fotos a cualquier día del calendario, incluso vacío; selector de año y mes al tocar el título.
+- Ajustes completos: estado y totales del servidor (`/stats`), tema claro/oscuro, idioma, cola de subidas, desconectar y acerca de.
+- Álbumes propios con nombre y portada: añadir de la biblioteca o del teléfono, quitar, renombrar y eliminar (las fotos no se borran).
+- Invitar por enlace (solo ver y descargar, sin cuentas; revocable) con conteo de personas que lo abrieron, y descarga del álbum en .zip (generado en streaming, sin dependencias).
 
 ### Changed
 - El QR de emparejamiento es ahora un enlace web (`/pair/go`) que lee cualquier cámara y abre la app; margen del QR de /pair de 1 a 4 módulos.
