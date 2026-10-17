@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { CalendarDots, GearSix, House, Images } from "phosphor-react-native";
+import { CalendarDots, GearSix, House, Images, SquaresFour } from "phosphor-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 
@@ -24,6 +24,7 @@ export default function Layout() {
     >
       <Tabs.Screen name="index" options={{ title: t("tabs.home"), tabBarIcon: icon(House) }} />
       <Tabs.Screen name="calendar" options={{ title: t("tabs.calendar"), tabBarIcon: icon(CalendarDots) }} />
+      <Tabs.Screen name="gallery" options={{ title: t("tabs.gallery"), tabBarIcon: icon(SquaresFour) }} />
       <Tabs.Screen name="albums" options={{ title: t("tabs.albums"), tabBarIcon: icon(Images) }} />
       <Tabs.Screen name="settings" options={{ title: t("tabs.settings"), tabBarIcon: icon(GearSix) }} />
     </Tabs>
