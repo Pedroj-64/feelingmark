@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { safeEqual } from "./app.ts";
 
 const TTL_MS = 15 * 60_000;
+const MAX_FAILS = 10; // fallos por minuto antes de responder 429
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /** Enlace que lleva el QR: la dirección del servidor y un código de un solo uso (no el token permanente). */
@@ -12,10 +13,16 @@ export const pairingLink = (url: string, code: string) => `feelingmark://connect
 /**
  * Emparejamiento del teléfono sin exponer el token: el QR trae un código que se canjea una vez y caduca a los 15 min.
  * /pair muestra un QR nuevo tras escribir el token, con la dirección por la que se abrió la página (sirve también en Docker).
- * ponytail: los códigos viven en memoria (se pierden al reiniciar) y /pair no limita intentos; el token tiene 192 bits.
+ * ponytail: los códigos viven en memoria (se pierden al reiniciar) y el límite de intentos es global, no por IP
+ * (tras un proxy la IP no es fiable); un atacante puede bloquear el emparejamiento un minuto, nunca entrar.
  */
 export function mountPairing(app: Hono, token: string) {
   const codes = new Map<string, number>();
+  let fails: number[] = [];
+  const blocked = () => {
+    fails = fails.filter((t) => t > Date.now() - 60_000);
+    return fails.length >= MAX_FAILS;
+  };
   const newCode = () => {
     for (const [c, exp] of codes) if (exp < Date.now()) codes.delete(c);
     const code = randomBytes(16).toString("hex");
@@ -24,10 +31,13 @@ export function mountPairing(app: Hono, token: string) {
   };
 
   app.post("/pair/redeem", async (c) => {
+    if (blocked()) return c.json({ error: "too many attempts" }, 429);
     const { code } = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
     const exp = typeof code === "string" ? codes.get(code) : undefined;
     if (typeof code === "string") codes.delete(code); // un código, un uso
-    return exp && exp > Date.now() ? c.json({ token }) : c.json({ error: "invalid or expired code" }, 404);
+    if (exp && exp > Date.now()) return c.json({ token });
+    fails.push(Date.now());
+    return c.json({ error: "invalid or expired code" }, 404);
   });
 
   const page = (es: boolean, body: string) =>
@@ -43,9 +53,16 @@ export function mountPairing(app: Hono, token: string) {
   app.get("/pair", (c) => c.html(form(isEs(c.req.header("accept-language")))));
   app.post("/pair", async (c) => {
     const es = isEs(c.req.header("accept-language"));
+    if (blocked())
+      return c.html(
+        form(es, `<p class="e">${es ? "Demasiados intentos. Espera un minuto." : "Too many attempts. Wait a minute."}</p>`),
+        429,
+      );
     const given = (await c.req.parseBody()).token;
-    if (typeof given !== "string" || !safeEqual(given, token))
+    if (typeof given !== "string" || !safeEqual(given, token)) {
+      fails.push(Date.now());
       return c.html(form(es, `<p class="e">${es ? "Token incorrecto." : "Wrong token."}</p>`), 401);
+    }
     const origin = new URL(c.req.url).origin;
     const svg = await QRCode.toString(pairingLink(origin, newCode()), { type: "svg", margin: 1 });
     return c.html(

@@ -56,3 +56,17 @@ test("el canje no requiere token pero tampoco filtra nada sin código válido", 
   assert.equal(r.status, 404);
   assert.ok(!(await r.text()).includes("secret-token"));
 });
+
+test("tras 10 intentos fallidos responde 429 y vuelve a la normalidad al minuto", async () => {
+  const { pairing, redeem } = setup();
+  for (let i = 0; i < 10; i++) assert.equal((await redeem("mal")).status, 404);
+  const code = pairing.newCode();
+  assert.equal((await redeem(code)).status, 429);
+  const now = Date.now;
+  Date.now = () => now() + 61_000;
+  try {
+    assert.equal((await redeem(code)).status, 200);
+  } finally {
+    Date.now = now;
+  }
+});
