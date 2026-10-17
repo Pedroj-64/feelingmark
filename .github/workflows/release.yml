@@ -39,17 +39,24 @@ jobs:
         run: |
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           export FEELINGMARK_KEYSTORE="$RUNNER_TEMP/release.jks"
-          ./gradlew assembleRelease --no-daemon
-          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/feelingmark-${GITHUB_REF_NAME}.apk"
+          # un APK por arquitectura (~40 MB) y uno universal (~122 MB) para quien no sepa cuál elegir
+          for abi in arm64-v8a armeabi-v7a x86_64 universal; do
+            if [ "$abi" = universal ]; then arch=arm64-v8a,armeabi-v7a,x86,x86_64; else arch=$abi; fi
+            ./gradlew clean assembleRelease --no-daemon -PreactNativeArchitectures=$arch # clean: que no arrastre librerías de otra arquitectura
+            cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/feelingmark-${GITHUB_REF_NAME}-$abi.apk"
+          done
       - name: Verify the APK is not signed with the debug key
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
-          "$APKSIGNER" verify --print-certs feelingmark-*.apk | tee cert.txt
+          for f in feelingmark-*.apk; do "$APKSIGNER" verify --print-certs "$f"; done | tee cert.txt
           ! grep -q "Android Debug" cert.txt
+          sha256sum feelingmark-*.apk > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: feelingmark-*.apk
+          path: |
+            feelingmark-*.apk
+            SHA256SUMS.txt
 
   release:
     needs: apk
@@ -80,4 +87,4 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" feelingmark-*.apk --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" feelingmark-*.apk SHA256SUMS.txt --title "$GITHUB_REF_NAME" --generate-notes
