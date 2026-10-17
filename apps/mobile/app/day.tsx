@@ -2,12 +2,15 @@ import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api } from "../src/api";
 import { loadConn } from "../src/settings";
+import { Text } from "../src/ui";
 import { useTheme } from "../src/theme";
+import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { CalendarBlank, Trash } from "phosphor-react-native";
 
 export default function Day() {
   const {
@@ -20,7 +23,7 @@ export default function Day() {
   const c = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const leave = () => (router.canGoBack() ? router.back() : router.replace("/")); // al abrir la vista de día directamente (web) no hay historial
+  const leave = () => (router.canGoBack() ? router.back() : router.replace("/calendar")); // al abrir la vista de día directamente (web) no hay historial
   const [api, setApi] = useState<Api | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteErr, setNoteErr] = useState(false);
@@ -90,19 +93,21 @@ export default function Day() {
                 ) : (
                   <Photo api={api} id={id} width={w} label={t("a11y.photoOf", { index: i + 1, total: photos.length })} />
                 )}
-                <MoveRow date={date} onMove={(d) => api.move(id, d).then(leave)} />
-                <DeleteButton
-                  label={t("a11y.deleteItem", { index: i + 1, total: photos.length })}
-                  onConfirmed={() =>
-                    api.remove(id).then((orphaned) => {
-                      if (orphaned) {
-                        if (Platform.OS === "web") window.alert(t("day.orphaned"));
-                        else Alert.alert(t("day.orphaned"));
-                      }
-                      leave();
-                    })
-                  }
-                />
+                <View style={s.actions}>
+                  <MoveRow date={date} onMove={(d) => api.move(id, d).then(leave)} />
+                  <DeleteButton
+                    label={t("a11y.deleteItem", { index: i + 1, total: photos.length })}
+                    onConfirmed={() =>
+                      api.remove(id).then((orphaned) => {
+                        if (orphaned) {
+                          if (Platform.OS === "web") window.alert(t("day.orphaned"));
+                          else Alert.alert(t("day.orphaned"));
+                        }
+                        leave();
+                      })
+                    }
+                  />
+                </View>
               </View>
             ))}
         </View>
@@ -112,10 +117,19 @@ export default function Day() {
 }
 
 const s = StyleSheet.create({
-  note: { borderWidth: 1, borderRadius: 14, padding: 14, minHeight: 88, fontSize: 16, marginBottom: 20, textAlignVertical: "top" },
-  input: { flex: 1, minWidth: 0, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
-  moveBtn: { borderWidth: 1, borderRadius: 14, minHeight: 48, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  deleteBtn: { minHeight: 44, justifyContent: "center" },
+  note: {
+    fontFamily: "Geist_400Regular",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    minHeight: 88,
+    fontSize: 16,
+    marginBottom: 20,
+    textAlignVertical: "top",
+  },
+  actions: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8 },
+  action: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 14, minHeight: 44, paddingHorizontal: 14 },
+  action2: { flexDirection: "row", alignItems: "center", gap: 8 },
   root: { flex: 1 },
   back: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   title: { fontSize: 26, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.5, marginVertical: 12 },
@@ -137,32 +151,61 @@ function VideoItem({ api, id, width, label }: { api: Api; id: number; width: num
   );
 }
 
+const iso = (d: Date) => {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+/** Mover un archivo a otro día con el selector nativo (diálogo en Android, compacto en iOS, <input type="date"> en web). */
 function MoveRow({ date, onMove }: { date: string; onMove: (d: string) => Promise<void> }) {
   const { t } = useTranslation();
   const c = useTheme();
-  const [v, setV] = useState(date);
   const [msg, setMsg] = useState("");
-  const ok = /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
-  return (
-    <View>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <TextInput
-          value={v}
-          onChangeText={setV}
-          autoCapitalize="none"
-          accessibilityLabel={t("a11y.dateField")}
-          style={[s.input, { color: c.ink, borderColor: c.muted, backgroundColor: c.surface }]}
+  const [picked, setPicked] = useState(new Date(`${date}T12:00:00`));
+  const go = (d: string) => d !== date && onMove(d).catch(() => setMsg(t("common.error")));
+  const btn = ({ pressed }: { pressed: boolean }) => [s.action, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }];
+
+  if (Platform.OS === "web")
+    return (
+      <View style={s.action2}>
+        <CalendarBlank size={20} color={c.accent} />
+        <input
+          type="date"
+          value={iso(picked)}
+          aria-label={t("a11y.dateField")}
+          onChange={(e) => e.target.value && go(e.target.value)}
+          style={{ font: "inherit", border: 0, background: "transparent", color: c.ink, minHeight: 44 }}
         />
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => (ok ? onMove(v).catch(() => setMsg(t("common.error"))) : setMsg(t("day.invalid")))}
-          style={({ pressed }) => [s.moveBtn, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-        >
+      </View>
+    );
+  if (Platform.OS === "ios")
+    return (
+      <View style={s.action2}>
+        <DateTimePicker value={picked} mode="date" display="compact" accentColor={c.accent} onChange={(_, d) => d && setPicked(d)} />
+        <Pressable accessibilityRole="button" onPress={() => go(iso(picked))} style={btn}>
           <Text style={{ color: c.accent, fontWeight: "600" }}>{t("day.move")}</Text>
         </Pressable>
       </View>
-      {msg !== "" && <Text style={{ color: c.muted, marginTop: 4 }}>{msg}</Text>}
-    </View>
+    );
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("a11y.dateField")}
+        onPress={() =>
+          DateTimePickerAndroid.open({
+            value: picked,
+            mode: "date",
+            onChange: (e, d) => e.type === "set" && d && (setPicked(d), go(iso(d))),
+          })
+        }
+        style={btn}
+      >
+        <CalendarBlank size={20} color={c.accent} />
+        <Text style={{ color: c.accent, fontWeight: "600" }}>{t("day.move")}</Text>
+      </Pressable>
+      {msg !== "" && <Text style={{ color: c.muted }}>{msg}</Text>}
+    </>
   );
 }
 
@@ -184,7 +227,13 @@ function DeleteButton({ label, onConfirmed }: { label: string; onConfirmed: () =
   };
   return (
     <View style={{ alignItems: "flex-start" }}>
-      <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={ask} hitSlop={8} style={s.deleteBtn}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        onPress={ask}
+        style={({ pressed }) => [s.action, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+      >
+        <Trash size={20} color={c.accent} />
         <Text style={{ color: c.accent, fontWeight: "600" }}>{t("day.delete")}</Text>
       </Pressable>
       {failed && <Text style={{ color: c.muted }}>{t("common.error")}</Text>}

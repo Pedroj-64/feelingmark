@@ -1,12 +1,16 @@
 import { File as FsFile } from "expo-file-system";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { Platform } from "react-native";
+import { MAX_VIDEO_MB } from "./gallery.ts";
 import type { Conn } from "./settings.ts";
 
 /** Archivo local para FormData en nativo: el fetch de Expo no admite {uri,...}; pide un objeto con bytes(), name y type. */
 const nativePart = (uri: string, name: string, type: string) => ({ name, type, bytes: () => new FsFile(uri).bytes() }) as unknown as Blob;
 
 export type Album = { month: string; count: number; cover: number };
+
+export type Memory = { date: string; ids: number[]; videos: number[]; note?: string };
+export type SearchHit = { date: string; note: string; cover: number | null };
 
 export type MonthData = {
   month: string;
@@ -44,6 +48,21 @@ export function createApi({ url, token }: Conn) {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return `${url}${(await r.json()).path}`;
     },
+    /** "Un día como hoy": lo de ese día y mes en años anteriores. */
+    async memories(date: string): Promise<Memory[]> {
+      const r = await fetch(`${url}/memories?date=${date}`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return (await r.json()).memories;
+    },
+    async search(q: string): Promise<SearchHit[]> {
+      const r = await fetch(`${url}/search?q=${encodeURIComponent(q)}`, { headers });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return (await r.json()).results;
+    },
+    /** Video del resumen del mes, por el enlace público de solo lectura (el reproductor no puede mandar cabeceras). */
+    async recapUrl(month: string): Promise<string> {
+      return `${await this.share(month)}/video`;
+    },
     async saveNote(date: string, note: string) {
       const r = await fetch(`${url}/days/${date}`, {
         method: "PUT",
@@ -71,7 +90,11 @@ export function createApi({ url, token }: Conn) {
       const form = new FormData();
       const type = asset.mimeType ?? "image/jpeg";
       if (Platform.OS === "web") form.append("file", asset.file ?? (await (await fetch(asset.uri)).blob()), asset.fileName ?? "photo");
-      else form.append("file", nativePart(asset.uri, asset.fileName ?? "photo.jpg", type));
+      else {
+        // El multipart se arma en memoria: un video enorme tumbaría la app. Se rechaza (la cola lo cuenta como no subido).
+        if (type.startsWith("video/") && (new FsFile(asset.uri).size ?? 0) > MAX_VIDEO_MB * 1024 * 1024) throw new Error("video too large");
+        form.append("file", nativePart(asset.uri, asset.fileName ?? "photo.jpg", type));
+      }
       // Miniatura hecha en el dispositivo: el servidor (p. ej. Cloudflare Workers) no siempre puede generarla. Si falla, se sube sin ella.
       try {
         const ctx = ImageManipulator.manipulate(asset.uri).resize({ width: 400 });

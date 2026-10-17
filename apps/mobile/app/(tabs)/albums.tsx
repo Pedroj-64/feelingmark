@@ -1,11 +1,12 @@
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Album, type Api } from "../../src/api";
 import { loadConn } from "../../src/settings";
+import { Skeleton, Text } from "../../src/ui";
 import { useTheme } from "../../src/theme";
 
 /** Un álbum por mes con fotos, creado solo a partir de las fechas. */
@@ -36,6 +37,15 @@ export default function Albums() {
 
   const gap = 12;
   const card = (Math.min(width, 720) - 16 * 2 - gap) / 2;
+  const years = useMemo(() => {
+    const by = new Map<string, Album[]>();
+    for (const al of albums ?? []) by.set(al.month.slice(0, 4), [...(by.get(al.month.slice(0, 4)) ?? []), al]);
+    return [...by.entries()]; // los álbumes ya vienen del más reciente al más antiguo
+  }, [albums]);
+  const monthName = (month: string) => {
+    const m = new Date(`${month}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long" });
+    return m.charAt(0).toUpperCase() + m.slice(1);
+  };
   const label = (month: string) => {
     const d = new Date(`${month}-01T12:00:00`).toLocaleDateString(i18n.language, { month: "long", year: "numeric" });
     return d.charAt(0).toUpperCase() + d.slice(1);
@@ -49,31 +59,45 @@ export default function Albums() {
         </Text>
         {error && <Text style={{ color: c.muted, marginBottom: 12 }}>{t("calendar.offline")}</Text>}
         {albums && albums.length === 0 && <Text style={{ color: c.muted }}>{t("albums.empty")}</Text>}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap }}>
-          {albums?.map((al) => (
-            <Pressable
-              key={al.month}
-              accessibilityRole="button"
-              accessibilityLabel={`${label(al.month)}, ${t("albums.count", { count: al.count })}`}
-              onPress={() => router.navigate({ pathname: "/", params: { month: al.month } })}
-              style={({ pressed }) => [{ width: card, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-            >
-              <View style={[s.cover, { width: card, height: card, backgroundColor: c.surface }]}>
-                {api && (
-                  <Image
-                    source={api.thumbSource(al.cover)}
-                    style={StyleSheet.absoluteFill}
-                    contentFit="cover"
-                    cachePolicy="disk"
-                    accessible={false}
-                  />
-                )}
-              </View>
-              <Text style={[s.name, { color: c.ink }]}>{label(al.month)}</Text>
-              <Text style={{ color: c.muted, fontSize: 13 }}>{t("albums.count", { count: al.count })}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {!albums && !error && (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} style={{ width: card, height: card, borderRadius: 16 }} />
+            ))}
+          </View>
+        )}
+        {years.map(([year, list]) => (
+          <View key={year} style={{ marginBottom: 20 }}>
+            <Text accessibilityRole="header" style={[s.year, { color: c.ink }]}>
+              {year}
+            </Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap }}>
+              {list.map((al) => (
+                <Pressable
+                  key={al.month}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${label(al.month)}, ${t("albums.count", { count: al.count })}`}
+                  onPress={() => router.navigate({ pathname: "/calendar", params: { month: al.month } })}
+                  style={({ pressed }) => [{ width: card, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+                >
+                  <View style={[s.cover, { width: card, height: card, backgroundColor: c.surface }]}>
+                    {api && (
+                      <Image
+                        source={api.thumbSource(al.cover)}
+                        style={StyleSheet.absoluteFill}
+                        contentFit="cover"
+                        cachePolicy="disk"
+                        accessible={false}
+                      />
+                    )}
+                  </View>
+                  <Text style={[s.name, { color: c.ink }]}>{monthName(al.month)}</Text>
+                  <Text style={{ color: c.muted, fontSize: 13 }}>{t("albums.count", { count: al.count })}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -83,5 +107,6 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   title: { fontSize: 28, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.5, marginTop: 16, marginBottom: 16 },
   cover: { borderRadius: 16, overflow: "hidden" },
+  year: { fontSize: 22, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.3, marginBottom: 12 },
   name: { fontSize: 16, fontWeight: "600", marginTop: 8 },
 });

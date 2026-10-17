@@ -1,10 +1,11 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { parsePairing } from "../src/pair";
+import { Text } from "../src/ui";
 import { useTheme } from "../src/theme";
 
 /** Escáner del QR que imprime el servidor (o muestra en /pair). Al leerlo pasa a la pantalla de confirmación. */

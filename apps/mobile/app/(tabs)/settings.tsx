@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Constants from "expo-constants";
 import { createApi } from "../../src/api";
 import { loadConn, saveConn } from "../../src/settings";
+import { Text } from "../../src/ui";
 import { useTheme } from "../../src/theme";
 
 export default function Settings() {
@@ -101,7 +102,7 @@ const s = StyleSheet.create({
   body: { padding: 16, width: "100%", maxWidth: 520, alignSelf: "center" },
   title: { fontSize: 28, fontFamily: "Fraunces_600SemiBold", letterSpacing: -0.5, marginTop: 16, marginBottom: 6 },
   label: { fontSize: 13, marginBottom: 6, marginTop: 14 },
-  input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
+  input: { fontFamily: "Geist_400Regular", borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, minHeight: 48, fontSize: 16 },
   logo: { width: 56, height: 56, borderRadius: 14, marginTop: 8 },
   ghost: { borderWidth: 1 },
   btn: { marginTop: 24, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },

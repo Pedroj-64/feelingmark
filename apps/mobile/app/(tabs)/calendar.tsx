@@ -1,22 +1,22 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { createApi, type Api, type MonthData } from "../../src/api";
 import { monthGrid, shiftMonth } from "../../src/calendar";
 import { monthCache } from "../../src/month-cache-store";
-import { drain, enqueue } from "../../src/queue";
-import { queueStore } from "../../src/queue-store";
 import { loadConn } from "../../src/settings";
 import { useTheme } from "../../src/theme";
+import { flushQueue, pickAndEnqueue } from "../../src/uploads";
+import { Button, Skeleton, Text } from "../../src/ui";
 
-const today = new Date().toISOString().slice(0, 10);
-
-// "2021:03:04 05:06:07" -> hora local ISO sin zona
-const exifDate = (v: unknown) => (typeof v === "string" ? v.replace(/^(\d{4}):(\d{2}):(\d{2}) /, "$1-$2-$3T") : undefined);
+const today = (() => {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; // día local, no UTC
+})();
 
 export default function CalendarScreen() {
   const { t, i18n } = useTranslation();
@@ -72,21 +72,10 @@ export default function CalendarScreen() {
   );
 
   // Sube lo pendiente de la cola (también lo que quedó de una sesión anterior).
-  const flushing = useRef(false); // un solo vaciado de la cola a la vez
   const flush = useCallback(
     async (a: Api, month: string) => {
-      if (flushing.current) return;
-      flushing.current = true;
-      let r;
-      try {
-        r = await drain(
-          queueStore,
-          (p) => a.upload(p),
-          (left) => setStatus(t("calendar.uploadingLeft", { count: left })),
-        );
-      } finally {
-        flushing.current = false;
-      }
+      const r = await flushQueue(a, (left) => setStatus(t("calendar.uploadingLeft", { count: left })));
+      if (!r) return; // otro vaciado ya está en marcha
       if (r.done > 0) await load(a, month);
       if (r.left > 0) setStatus(t("calendar.pending", { count: r.left }));
       else if (r.dropped > 0) setStatus(t("calendar.dropped", { count: r.dropped }));
@@ -108,26 +97,14 @@ export default function CalendarScreen() {
 
   async function add() {
     if (!api) return;
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, exif: true });
-    if (res.canceled) return;
-    await enqueue(
-      queueStore,
-      res.assets.map((a) => ({
-        uri: a.uri,
-        mimeType: a.mimeType,
-        fileName: a.fileName,
-        file: a.file,
-        takenAt: exifDate(a.exif?.DateTimeOriginal),
-      })),
-    );
-    await flush(api, ym);
+    if ((await pickAndEnqueue()) > 0) await flush(api, ym);
   }
 
   async function shareMonth(video: boolean) {
     if (!api) return;
     try {
       const link = await api.share(ym);
-      if (video) return void Linking.openURL(`${link}/video`);
+      if (video) return void router.push({ pathname: "/recap", params: { month: ym } });
       if (Platform.OS === "web") {
         await navigator.clipboard.writeText(link);
         setStatus(t("calendar.linkCopied"));
@@ -218,44 +195,28 @@ export default function CalendarScreen() {
             })}
           </View>
         ))}
+        {!data && !status && (
+          <View style={{ paddingHorizontal: 16, gap: 6 }}>
+            {[0, 1, 2, 3, 4].map((r) => (
+              <View key={r} style={{ flexDirection: "row", gap: 6 }}>
+                {Array.from({ length: 7 }, (_, i) => (
+                  <Skeleton key={i} style={{ flex: 1, height: cell - 8 }} />
+                ))}
+              </View>
+            ))}
+          </View>
+        )}
         {empty && !status && <Text style={[s.msg, { color: c.muted }]}>{t("calendar.empty")}</Text>}
         {status && (
           <Text accessibilityLiveRegion="polite" style={[s.msg, { color: c.muted }]}>
             {status}
           </Text>
         )}
-        {!api && Platform.OS !== "web" && <ScanButton />}
-        <Pressable
-          disabled={!api}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !api }}
-          onPress={add}
-          style={({ pressed }) => [
-            s.btn,
-            { backgroundColor: c.accent, opacity: api ? 1 : 0.4, transform: [{ translateY: pressed ? 1 : 0 }] },
-          ]}
-        >
-          <Text style={{ color: c.onAccent, fontWeight: "600" }}>{t("calendar.add")}</Text>
-        </Pressable>
+        <Button label={t("calendar.add")} disabled={!api} onPress={add} style={{ margin: 16, marginTop: 24 }} />
         {!empty && data && (
           <View style={s.secondary}>
-            {(
-              [
-                ["calendar.video", true],
-                ["calendar.share", false],
-              ] as const
-            )
-              .filter(([k]) => k !== "calendar.video" || data.video)
-              .map(([k, v]) => (
-                <Pressable
-                  key={k}
-                  accessibilityRole="button"
-                  onPress={() => shareMonth(v)}
-                  style={({ pressed }) => [s.ghost, { borderColor: c.line, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-                >
-                  <Text style={{ color: c.accent, fontWeight: "600" }}>{t(k)}</Text>
-                </Pressable>
-              ))}
+            {data.video && <Button kind="ghost" label={t("calendar.video")} onPress={() => shareMonth(true)} style={{ flex: 1 }} />}
+            <Button kind="ghost" label={t("calendar.share")} onPress={() => shareMonth(false)} style={{ flex: 1 }} />
           </View>
         )}
       </ScrollView>
@@ -285,23 +246,5 @@ const s = StyleSheet.create({
   },
   noteDot: { position: "absolute", left: 6, bottom: 6, width: 6, height: 6, borderRadius: 3 },
   secondary: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
-  ghost: { flex: 1, borderWidth: 1, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
   msg: { textAlign: "center", marginTop: 20, paddingHorizontal: 16 },
-  btn: { margin: 16, marginTop: 24, borderRadius: 14, minHeight: 48, alignItems: "center", justifyContent: "center" },
 });
-
-/** Primer uso: sin servidor conectado, lo primero que se ofrece es escanear su QR. */
-function ScanButton() {
-  const { t } = useTranslation();
-  const c = useTheme();
-  const router = useRouter();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={() => router.push("/scan")}
-      style={({ pressed }) => [s.btn, { backgroundColor: c.accent, marginBottom: 12, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-    >
-      <Text style={{ color: c.onAccent, fontWeight: "600" }}>{t("scan.action")}</Text>
-    </Pressable>
-  );
-}

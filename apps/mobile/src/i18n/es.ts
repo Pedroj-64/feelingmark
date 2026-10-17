@@ -1,7 +1,7 @@
 import type en from "./en.ts";
 
 const es: typeof en = {
-  tabs: { calendar: "Calendario", albums: "Álbumes", settings: "Ajustes" },
+  tabs: { home: "Inicio", calendar: "Calendario", albums: "Álbumes", settings: "Ajustes" },
   albums: {
     empty: "Aún no hay álbumes. Añade fotos y cada mes tendrá el suyo.",
     count_one: "{{count}} foto",
@@ -75,6 +75,51 @@ const es: typeof en = {
     allow: "Permitir la cámara",
     openSettings: "Abrir los ajustes del sistema",
     cameraLabel: "Cámara para escanear el QR de emparejamiento",
+  },
+  home: {
+    morning: "Buenos días",
+    afternoon: "Buenas tardes",
+    evening: "Buenas noches",
+    today: "Hoy",
+    todayEmpty: "Aún no hay nada guardado hoy.",
+    memories: "Un día como hoy",
+    yearsAgo_one: "Hace {{count}} año",
+    yearsAgo_other: "Hace {{count}} años",
+    recap: "Tu resumen de {{month}}",
+    recapHint: "Un video corto hecho con tus fotos.",
+    connectTitle: "Empieza conectando tu servidor",
+    connectBody:
+      "Feelingmark no guarda nada por ti. Tus fotos viven en un servidor que tú levantas. Escanea su QR para enlazar este teléfono.",
+    connectManual: "Escribir la dirección a mano",
+    firstTitle: "Añade tu primer recuerdo",
+    firstBody: "Elige fotos y videos, o importa un álbum entero de tu galería. Cada uno queda en el día en que se tomó.",
+    pick: "Elegir fotos y videos",
+    importAlbum: "Importar un álbum",
+    add: "Añadir",
+    search: "Buscar en las notas",
+    openCalendar: "Abrir calendario",
+  },
+  import: {
+    title: "Importar un álbum",
+    hint: "Elige un álbum de tu galería. Solo se añade lo nuevo desde la última importación.",
+    denied: "Feelingmark necesita acceso a tus fotos para importar un álbum.",
+    openSettings: "Abrir ajustes del sistema",
+    preparing: "Preparando {{done}} de {{total}}…",
+    nothingNew: "No hay nada nuevo en este álbum.",
+    queued_one: "{{count}} archivo en cola para subir.",
+    queued_other: "{{count}} archivos en cola para subir.",
+  },
+  search: {
+    title: "Buscar",
+    placeholder: "Buscar en tus notas",
+    hint: "Escribe al menos dos letras.",
+    none: "Ninguna nota coincide.",
+  },
+  recap: {
+    title: "Resumen del mes",
+    loading: "Preparando tu video. La primera vez puede tardar un minuto.",
+    error: "No se pudo hacer el video. Tu servidor necesita ffmpeg y al menos una foto este mes.",
+    retry: "Reintentar",
   },
   common: { error: "Algo salió mal. Inténtalo de nuevo." },
 };

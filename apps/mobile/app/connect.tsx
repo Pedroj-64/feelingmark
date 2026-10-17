@@ -1,10 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { redeem } from "../src/pair";
 import { saveConn } from "../src/settings";
+import { Text } from "../src/ui";
 import { useTheme } from "../src/theme";
 
 /** Destino del QR de emparejamiento (feelingmark://connect?u=...&t=...). Pide confirmar: un QR ajeno podría apuntar a otro servidor. */
