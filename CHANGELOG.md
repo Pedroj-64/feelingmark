@@ -5,6 +5,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Unreleased]
 
 ### Added
+- Videos: se pueden subir e importar (mp4, mov, webm, 3gp); fecha desde los metadatos, portada generada con ffmpeg y reproducción con avance libre (Range) en el servidor.
+- Importador de carpetas (`node src/import.ts <carpeta>`): simula por defecto, informa de dónde sale cada fecha y avisa si todo cae en un solo día; `--apply` guarda y es repetible.
+- Guía de uso personal con servidor privado e importación desde el teléfono con `adb`.
+
+### Fixed
+- El día del calendario ya no depende de la zona horaria del servidor: se guarda la hora de reloj de la cámara (antes una foto de la noche podía caer en el día siguiente).
+
+### Added
 - Accesibilidad: roles y etiquetas para lectores de pantalla (días del calendario, navegación entre meses, campos y botones), encabezados, avisos con región en vivo y los días vacíos ya no se anuncian como botones.
 
 ### Changed

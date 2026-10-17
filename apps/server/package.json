@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "node --watch src/index.ts",
     "test": "node --test test/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "import": "node src/import.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",

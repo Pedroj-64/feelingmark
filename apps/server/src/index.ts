@@ -1,19 +1,16 @@
 import { randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import { dirname } from "node:path";
 import { serve } from "@hono/node-server";
 import qrcode from "qrcode-terminal";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createApp } from "./app.ts";
-import type { Db } from "./db.ts";
 import { openDb } from "./db-node.ts";
 import { thumbnail, videoDate, videoPoster } from "./node-tools.ts";
 import { buildSlideshow } from "./video.ts";
-import { gdriveStorage } from "./gdrive.ts";
 import { getRefreshToken, mountGoogleOAuth } from "./oauth-google.ts";
-import { s3StorageAdapter } from "./s3.ts";
-import { localStorageAdapter } from "./storage.ts";
+import { googleCreds, pickStorage } from "./storage-env.ts";
 
 const dbPath = process.env.DATABASE_PATH ?? "./data/feelingmark.sqlite";
 mkdirSync(dirname(dbPath), { recursive: true });
@@ -22,31 +19,6 @@ if (!token) {
   token = randomBytes(24).toString("hex");
   console.log(`AUTH_TOKEN no definido; token temporal / temporary token: ${token}`);
 }
-/** Credenciales de Google: GOOGLE_CREDENTIALS_FILE (el JSON que descarga Google) o GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET. */
-function googleCreds() {
-  const file = process.env.GOOGLE_CREDENTIALS_FILE;
-  if (file) {
-    const raw = JSON.parse(readFileSync(file, "utf8"));
-    const c = raw.web ?? raw.installed ?? raw;
-    return { clientId: String(c.client_id), clientSecret: String(c.client_secret) };
-  }
-  const need = (k: string) => process.env[k] || (console.error(`Falta / missing ${k}`), process.exit(1));
-  return { clientId: need("GOOGLE_CLIENT_ID"), clientSecret: need("GOOGLE_CLIENT_SECRET") };
-}
-
-function pickStorage(db: Db) {
-  if (process.env.STORAGE_DRIVER === "gdrive") return gdriveStorage({ ...googleCreds(), refreshToken: () => getRefreshToken(db) });
-  if (process.env.STORAGE_DRIVER !== "s3") return localStorageAdapter(process.env.STORAGE_PATH ?? "./data/photos");
-  const need = (k: string) => process.env[k] || (console.error(`Falta / missing ${k}`), process.exit(1));
-  return s3StorageAdapter({
-    endpoint: need("S3_ENDPOINT"),
-    bucket: need("S3_BUCKET"),
-    accessKeyId: need("S3_ACCESS_KEY_ID"),
-    secretAccessKey: need("S3_SECRET_ACCESS_KEY"),
-    region: process.env.S3_REGION,
-  });
-}
-
 // Música opcional para el video del mes: VIDEO_MUSIC_FILE=/ruta/a/tu/audio.mp3 (usa un audio del que tengas derechos).
 let music = process.env.VIDEO_MUSIC_FILE;
 if (music && !existsSync(music)) {

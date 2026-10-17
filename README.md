@@ -29,7 +29,7 @@ Built as an open alternative for people who liked apps like Dots Memories but do
 - Light/dark mode, English and Spanish (more languages welcome).
 - Storage on a local disk or any S3-compatible service (Cloudflare R2, Backblaze B2, MinIO).
 
-Deploy on Cloudflare Workers + D1 + R2 with one command ([guide](docs/cloudflare.md)). Experimental Google Drive storage ([guide](docs/google-drive.md)). Guides: [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Roadmap: [`docs/PLAN.md`](docs/PLAN.md).
+Deploy on Cloudflare Workers + D1 + R2 with one command ([guide](docs/cloudflare.md)). Experimental Google Drive storage ([guide](docs/google-drive.md)). Guides: [`docs/personal-use.md`](docs/personal-use.md) (private server + importing your library), [`docs/install.md`](docs/install.md), [`docs/storage.md`](docs/storage.md). Roadmap: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Quick start (Docker)
 
