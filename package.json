@@ -12,6 +12,6 @@
     "deploy:cloudflare": "pnpm --filter @feelingmark/mobile build:web && pnpm --filter @feelingmark/server exec wrangler deploy"
   },
   "devDependencies": {
-    "prettier": "^3.9.10"
+    "prettier": "^3.10.0"
   }
 }
